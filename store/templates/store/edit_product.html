@@ -1,0 +1,85 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-edit"></i> CHỈNH SỬA SẢN PHẨM</h4>
+                </div>
+                <div class="card-body p-4">
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger shadow-sm mb-4">
+                        <h6 class="fw-bold"><i class="fas fa-exclamation-triangle"></i> Lỗi hệ thống:</h6>
+                        <ul class="mb-0 small">
+                            {% for field, errors in form.errors.items %}
+                                <li><strong>{{ field }}:</strong> {{ errors|striptags }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="fw-bold">Tên sản phẩm</label>
+                            {{ form.name }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="fw-bold">Danh mục</label>
+                                {{ form.category }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="fw-bold">Giá tiền</label>
+                                {{ form.price }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold">Mô tả</label>
+                            {{ form.description }}
+                        </div>
+
+                        <div class="mb-4 border p-3 rounded bg-light">
+                            <label class="fw-bold text-primary">Ảnh đại diện chính:</label>
+                            <div class="d-flex align-items-center mt-2">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="me-3 rounded border" style="width: 80px; height: 80px; object-fit: cover;">
+                                {% endif %}
+                                {{ form.image }}
+                            </div>
+                        </div>
+
+                        <div class="mb-4 border p-3 rounded bg-light">
+                            <label class="fw-bold text-primary mb-2">Album ảnh chi tiết:</label>
+
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                {% for img in product.gallery.all %}
+                                <div class="position-relative">
+                                    <img src="{{ img.image.url }}" class="rounded border" style="width: 80px; height: 80px; object-fit: cover;">
+                                    <a href="{% url 'delete_image' img.id %}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-decoration-none" onclick="return confirm('Xóa ảnh này?');">
+                                        x
+                                    </a>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <label class="small text-muted">Thêm ảnh mới vào album (Giữ Ctrl để chọn nhiều):</label>
+                            <input type="file" name="detail_images" class="form-control" multiple>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'manage_products' %}" class="btn btn-secondary px-4">Hủy & Quay lại</a>
+                            <button type="submit" class="btn btn-primary fw-bold px-5">LƯU THAY ĐỔI</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

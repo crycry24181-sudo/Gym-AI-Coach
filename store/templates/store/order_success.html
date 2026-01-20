@@ -1,0 +1,22 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="mb-4 text-success">
+        <i class="fas fa-check-circle fa-5x"></i>
+    </div>
+    <h1 class="fw-bold">ĐẶT HÀNG THÀNH CÔNG!</h1>
+    <p class="lead">Mã đơn hàng của bạn là: <strong>#{{ order.id }}</strong></p>
+    <p>Chúng tôi đã gửi thông tin xác nhận về email: <b>{{ order.email }}</b></p>
+
+    <div class="card mx-auto mt-4 p-3" style="max-width: 500px;">
+        <h5>Thông tin người nhận</h5>
+        <p><strong>{{ order.full_name }}</strong> - {{ order.phone }}</p>
+        <p>{{ order.address }}</p>
+        <hr>
+        <h4 class="text-danger">Tổng thanh toán: {{ order.total_amount }} đ</h4>
+        <p class="badge bg-warning text-dark">{{ order.get_payment_method_display }}</p>
+    </div>
+
+    <a href="{% url 'store' %}" class="btn btn-primary mt-4">Tiếp tục mua sắm</a>
+</div>
+{% endblock %}

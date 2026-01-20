@@ -1,0 +1,115 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block css %}
+<style>
+    /* --- PHẦN BANNER ẢNH NỀN (Code chuẩn bạn đã gửi) --- */
+    .hero-section {
+        /* 1. TĂNG CHIỀU CAO: Để ảnh dọc có đủ chỗ đứng (chiếm 85% màn hình) */
+        min-height: 85vh;
+
+        /* 2. CĂN GIỮA NỘI DUNG CHỮ: Dùng Flexbox */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        text-align: center;
+        color: white;
+
+        /* 3. MÀU NỀN: Đặt màu đen để lấp đầy khoảng trống */
+        background-color: #1a1a1a;
+
+        /* 4. CẤU HÌNH ẢNH NỀN */
+        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("{% static 'images/banner.jpg' %}");
+
+        background-size: contain;       /* <--- CHÌA KHÓA: Giúp hiện full body */
+        background-repeat: no-repeat;
+        background-position: center bottom; /* Chân chạm đáy */
+
+        /* Bo tròn góc dưới */
+        border-radius: 0 0 50px 50px;
+        margin-bottom: 50px;
+
+        padding: 0;
+    }
+
+    .main-heading {
+        font-weight: 900;
+        color: #ffffff;
+        text-transform: uppercase;
+        font-size: 4rem;
+        margin-bottom: 20px;
+        text-shadow: 4px 4px 10px rgba(0,0,0,1);
+        z-index: 2;
+    }
+
+    .hero-section p {
+        font-size: 1.5rem;
+        font-weight: 400;
+        color: #f0f0f0;
+        text-shadow: 2px 2px 5px rgba(0,0,0,1);
+        z-index: 2;
+    }
+
+    /* --- PHẦN THẺ BÀI TẬP --- */
+    .muscle-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .muscle-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .muscle-card img {
+        height: 250px;
+        object-fit: cover;
+    }
+    .card-title {
+        font-weight: bold;
+        color: #333;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container-fluid p-0">
+        <div class="hero-section">
+            <div class="container">
+                <h1 class="main-heading">HÔM NAY BẠN MUỐN TẬP GÌ?</h1>
+                <p>Chọn nhóm cơ bạn muốn phát triển</p>
+
+                <a href="#list-exercises" class="btn btn-primary btn-lg mt-3 rounded-pill px-5 shadow">
+                    <i class="fas fa-fire me-2"></i> BẮT ĐẦU NGAY
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5" id="list-exercises">
+        <div class="row g-4">
+
+            {% for item in muscle_groups %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card muscle-card h-100 shadow-sm">
+                    <img src="{% static item.img %}" class="card-img-top" alt="{{ item.name }}">
+
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ item.name }}</h5>
+                        <a href="#" class="btn btn-outline-dark mt-2 stretched-link w-100">
+                            Xem bài tập
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+{% endblock %}

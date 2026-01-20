@@ -1,0 +1,51 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5" style="font-weight: 900; text-transform: uppercase;">💊 Cửa hàng Thực phẩm Bổ sung</h1>
+
+    {% for category_group in products_by_category %}
+
+        <div class="d-flex align-items-center mb-4 mt-5 border-bottom pb-2">
+            <h2 class="text-primary fw-bold text-uppercase m-0">
+                <i class="fas fa-layer-group me-2"></i> {{ category_group.category_name }}
+            </h2>
+        </div>
+
+        <div class="row g-4">
+
+            {% for product in category_group.products %}
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0">
+
+                    <a href="{% url 'product_detail' product.pk %}" class="text-decoration-none text-dark">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="card-img-top" style="height: 250px; object-fit: contain; padding: 20px;">
+                        {% else %}
+                            <div style="height: 250px; background: #eee; display: flex; align-items: center; justify-content: center;">Chưa có ảnh</div>
+                        {% endif %}
+
+                        <div class="card-body text-center">
+                            <h5 class="card-title fw-bold">{{ product.name }}</h5>
+                            <h4 class="text-danger fw-bold">{{ product.price }} đ</h4>
+                        </div>
+                    </a>
+
+                    <div class="card-footer bg-white border-0">
+                        <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-dark w-100">
+                            <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %} </div>
+
+    {% empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <p class="text-muted">Chưa có sản phẩm nào được bày bán.</p>
+        </div>
+    {% endfor %} </div>
+{% endblock %}
