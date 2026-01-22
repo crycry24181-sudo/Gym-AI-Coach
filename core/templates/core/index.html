@@ -1,0 +1,167 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block css %}
+<style>
+/* ===== HERO ===== */
+.hero-section {
+    min-height: 85vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    background-color: #1a1a1a;
+    background-image:
+        linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+        url("{% static 'images/banner.jpg' %}");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    border-radius: 0 0 50px 50px;
+    margin-bottom: 50px;
+}
+
+.main-heading {
+    font-weight: 900;
+    font-size: 4rem;
+    text-shadow: 4px 4px 10px rgba(0,0,0,1);
+}
+
+/* ===== AI COACH ===== */
+.ai-card {
+    border-radius: 15px;
+}
+
+/* ===== MUSCLE CARD ===== */
+.muscle-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    border-radius: 15px;
+}
+.muscle-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+.muscle-card img {
+    height: 250px;
+    object-fit: cover;
+}
+.card-title {
+    font-weight: bold;
+    text-transform: uppercase;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== HERO ===== -->
+<div class="container-fluid p-0">
+  <div class="hero-section">
+    <div>
+      <h1 class="main-heading">HÔM NAY BẠN MUỐN TẬP GÌ?</h1>
+      <p>Chọn nhóm cơ bạn muốn phát triển</p>
+      <a href="#ai-coach" class="btn btn-primary btn-lg mt-3 rounded-pill px-5">
+        BẮT ĐẦU NGAY
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AI COACH (HIỆN TRỰC TIẾP TRANG CHÍNH) ===== -->
+<div class="container my-5" id="ai-coach">
+  <h2 class="mb-3">🤖 AI Coach – Phân tích thể trạng</h2>
+
+  <div class="card ai-card p-3 shadow">
+    <form id="ai-form" class="row g-2">
+      <div class="col-md-2">
+        <input class="form-control" name="age" placeholder="Tuổi" required>
+      </div>
+
+      <div class="col-md-2">
+        <input class="form-control" name="height" placeholder="Chiều cao (cm)" required>
+      </div>
+
+      <div class="col-md-2">
+        <input class="form-control" name="weight" placeholder="Cân nặng (kg)" required>
+      </div>
+
+      <div class="col-md-2">
+        <select class="form-control" name="gender">
+          <option value="male">Nam</option>
+          <option value="female">Nữ</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select class="form-control" name="goal">
+          <option value="gain_muscle">Tăng cơ</option>
+          <option value="lose_weight">Giảm mỡ</option>
+          <option value="maintain">Giữ dáng</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <button class="btn btn-success w-100" type="submit">
+          Phân tích AI
+        </button>
+      </div>
+    </form>
+
+    <div id="ai-result" class="mt-4"></div>
+  </div>
+</div>
+
+<!-- ===== MUSCLE GROUP ===== -->
+<div class="container mb-5">
+  <div class="row g-4">
+    {% for item in muscle_groups %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card muscle-card h-100 shadow-sm">
+        <img src="{% static item.img %}" class="card-img-top" alt="{{ item.name }}">
+        <div class="card-body text-center">
+          <h5 class="card-title">{{ item.name }}</h5>
+          <a href="#" class="btn btn-outline-dark mt-2 w-100">
+            Xem bài tập
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ===== AI SCRIPT ===== -->
+<script>
+document.getElementById("ai-form").onsubmit = async function(e) {
+    e.preventDefault();
+
+    const data = Object.fromEntries(new FormData(this).entries());
+
+    const res = await fetch("/api/ai/recommend/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    const r = await res.json();
+
+    document.getElementById("ai-result").innerHTML = `
+      <div class="alert alert-info">
+        <h5>Kết quả AI Coach</h5>
+        <ul>
+          <li><b>BMI:</b> ${r.bmi} (${r.body_category})</li>
+          <li><b>BMR:</b> ${r.bmr} kcal</li>
+          <li><b>TDEE:</b> ${r.tdee} kcal</li>
+          <li><b>Calo đề xuất:</b> ${r.recommended_calories} kcal</li>
+          <li><b>Lịch tập:</b> ${r.workout_plan}</li>
+          <li><b>Chế độ ăn:</b> ${r.diet}</li>
+        </ul>
+      </div>
+    `;
+};
+
+</script>
+
+{% endblock %}

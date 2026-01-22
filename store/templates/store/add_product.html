@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white text-center py-3">
+                    <h3 class="mb-0 fw-bold"><i class="fas fa-plus-circle"></i> THÊM SẢN PHẨM MỚI</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="fw-bold mb-1">Tên sản phẩm</label>
+                            {{ form.name }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="fw-bold mb-1">Danh mục</label>
+                                {{ form.category }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="fw-bold mb-1">Giá bán (VNĐ)</label>
+                                {{ form.price }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold mb-1">Ảnh đại diện</label>
+                            {{ form.image }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold mb-1">Mô tả sản phẩm</label>
+                            {{ form.description }}
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg fw-bold">
+                                <i class="fas fa-save"></i> LƯU SẢN PHẨM
+                            </button>
+                            <a href="{% url 'store' %}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

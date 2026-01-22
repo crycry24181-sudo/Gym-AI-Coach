@@ -1,0 +1,95 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+
+    <a href="{% url 'store' %}" class="btn btn-outline-secondary mb-4 btn-sm">
+        <i class="fas fa-arrow-left"></i> Quay lại cửa hàng
+    </a>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card mb-3 shadow-sm border-0">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" class="card-img-top p-3" id="mainImage" style="height: 400px; object-fit: contain;">
+                {% else %}
+                    <div style="height: 400px; background: #eee; display: flex; align-items: center; justify-content: center;">
+                        Chưa có ảnh
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex gap-2 overflow-auto pb-2">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" onclick="changeImage(this)" class="img-thumbnail border-primary" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; opacity: 1;">
+                {% endif %}
+
+                {% for gallery_item in product.gallery.all %}
+                    <img src="{{ gallery_item.image.url }}" onclick="changeImage(this)" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; opacity: 0.7;">
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <h2 class="fw-bold text-uppercase">{{ product.name }}</h2>
+            <p class="text-muted">Danh mục: <span class="badge bg-info text-dark">{{ product.get_category_display }}</span></p>
+
+            <h3 class="text-danger fw-bold my-3 display-6">{{ product.price }} đ</h3>
+
+            <div class="d-grid gap-2 mb-4">
+                <a href="{% url 'add_to_cart' product.pk %}?buy_now=true" class="btn btn-danger btn-lg fw-bold shadow-sm py-3">
+                    <i class="fas fa-bolt me-2"></i> MUA NGAY
+                </a>
+
+                <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-outline-dark btn-lg py-3">
+                    <i class="fas fa-shopping-cart me-2"></i> THÊM VÀO GIỎ HÀNG
+                </a>
+            </div>
+
+            <div class="card card-body bg-light border-0 shadow-sm">
+                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="fas fa-info-circle"></i> Mô tả sản phẩm:</h5>
+                <p style="white-space: pre-line; color: #555; line-height: 1.6;">{{ product.description }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Hàm đổi ảnh khi bấm vào thumbnail
+    function changeImage(element) {
+        // 1. Đổi ảnh chính
+        var mainImg = document.getElementById('mainImage');
+        mainImg.src = element.src;
+
+        // 2. Hiệu ứng làm mờ nhẹ để tạo cảm giác chuyển ảnh
+        mainImg.style.opacity = 0;
+        setTimeout(function(){
+            mainImg.style.opacity = 1;
+        }, 100);
+
+        // 3. Reset viền các ảnh nhỏ
+        var thumbnails = document.querySelectorAll('.img-thumbnail');
+        thumbnails.forEach(function(img) {
+            img.classList.remove('border-primary'); // Bỏ viền xanh
+            img.style.opacity = 0.7; // Làm mờ đi
+        });
+
+        // 4. Highlight ảnh vừa bấm
+        element.classList.add('border-primary'); // Thêm viền xanh
+        element.style.opacity = 1; // Làm rõ lên
+    }
+</script>
+
+<style>
+    /* Hiệu ứng chuyển động mượt cho ảnh chính */
+    #mainImage {
+        transition: opacity 0.3s ease-in-out;
+    }
+    /* Hiệu ứng hover cho ảnh nhỏ */
+    .img-thumbnail:hover {
+        opacity: 1 !important;
+        border-color: #0d6efd;
+    }
+</style>
+{% endblock %}
