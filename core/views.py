@@ -19,3 +19,10 @@ def index(request):
         'muscle_groups': muscle_groups
     }
     return render(request, 'core/index.html', context)
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+
+@login_required(login_url='login')
+def ai_page(request):
+    return render(request, 'core/ai.html')

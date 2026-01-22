@@ -1,68 +1,22 @@
 {% extends 'core/base.html' %}
-{% load static %}
-
 {% block content %}
-<div class="container py-5" style="margin-top: 80px;">
-    <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
-
-            <div class="mb-4"><i class="fas fa-check-circle text-success" style="font-size: 80px;"></i></div>
-            <h2 class="fw-bold text-success">ĐẶT HÀNG THÀNH CÔNG!</h2>
-            <p class="fs-5">Mã đơn hàng: <strong class="text-danger">#{{ order.id }}</strong></p>
-
-            {% if order.payment_method == 'transfer' %}
-                <div class="card mt-4 shadow-lg border-success">
-                    <div class="card-header bg-success text-white">
-                        <h4 class="mb-0"><i class="fas fa-university me-2"></i> QUÉT MÃ VIETQR</h4>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">Mở App Ngân hàng quét mã để tự động nhập nội dung:</p>
-
-                        <img src="https://img.vietqr.io/image/MB-6595678910-compact2.png?amount={{ order.total_amount|floatformat:0 }}&addInfo=THANH TOAN DON {{ order.id }}&accountName=HOANG QUOC CUONG"
-                             class="img-fluid border border-2 border-dark rounded mb-3" width="300">
-
-                        <div class="alert alert-light text-start border d-inline-block">
-                            <p class="mb-1">🏦 <strong>Ngân hàng:</strong> MB Bank (Quân Đội)</p>
-                            <p class="mb-1">💳 <strong>Số tài khoản:</strong> 6595678910</p>
-                            <p class="mb-1">👤 <strong>Chủ tài khoản:</strong> HOANG QUOC CUONG</p>
-                            <p class="mb-1">💰 <strong>Số tiền:</strong> {{ order.total_amount|floatformat:0 }} đ</p>
-                            <p class="mb-0">📝 <strong>Nội dung:</strong> <span class="text-danger fw-bold">DH{{ order.id }}</span></p>
-                        </div>
-                    </div>
-                </div>
-
-            {% elif order.payment_method == 'momo' %}
-                <div class="card mt-4 shadow-lg border-danger">
-                    <div class="card-header bg-danger text-white">
-                        <h4 class="mb-0"><i class="fas fa-wallet me-2"></i> THANH TOÁN MOMO</h4>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">Mở App MoMo quét mã để chuyển tiền:</p>
-
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=2|99|0912634507|HOANG QUOC CUONG||0|0|{{ order.total_amount|floatformat:0 }}|DH{{ order.id }}|transfer_myqr"
-                             class="img-fluid border border-2 border-danger rounded mb-3" width="300">
-
-                        <div class="alert alert-light text-start border d-inline-block">
-                            <p class="mb-1">📱 <strong>SĐT MoMo:</strong>0912634507</p>
-                            <p class="mb-1">👤 <strong>Tên Ví:</strong> HOANG QUOC CUONG</p>
-                            <p class="mb-1">💰 <strong>Số tiền:</strong> {{ order.total_amount|floatformat:0 }} đ</p>
-                            <p class="mb-0">📝 <strong>Lời nhắn:</strong> <span class="text-danger fw-bold">DH{{ order.id }}</span></p>
-                        </div>
-                    </div>
-                </div>
-
-            {% else %}
-                <div class="alert alert-info mt-4">
-                    <i class="fas fa-truck"></i> Đơn hàng sẽ được giao và thu tiền tận nơi (COD).
-                </div>
-            {% endif %}
-
-            <div class="mt-5">
-                <a href="{% url 'store' %}" class="btn btn-outline-dark rounded-pill px-4">Tiếp tục mua sắm</a>
-                <a href="{% url 'order_history' %}" class="btn btn-primary rounded-pill px-4 ms-2">Xem đơn hàng</a>
-            </div>
-
-        </div>
+<div class="container py-5 text-center">
+    <div class="mb-4 text-success">
+        <i class="fas fa-check-circle fa-5x"></i>
     </div>
+    <h1 class="fw-bold">ĐẶT HÀNG THÀNH CÔNG!</h1>
+    <p class="lead">Mã đơn hàng của bạn là: <strong>#{{ order.id }}</strong></p>
+    <p>Chúng tôi đã gửi thông tin xác nhận về email: <b>{{ order.email }}</b></p>
+
+    <div class="card mx-auto mt-4 p-3" style="max-width: 500px;">
+        <h5>Thông tin người nhận</h5>
+        <p><strong>{{ order.full_name }}</strong> - {{ order.phone }}</p>
+        <p>{{ order.address }}</p>
+        <hr>
+        <h4 class="text-danger">Tổng thanh toán: {{ order.total_amount }} đ</h4>
+        <p class="badge bg-warning text-dark">{{ order.get_payment_method_display }}</p>
+    </div>
+
+    <a href="{% url 'store' %}" class="btn btn-primary mt-4">Tiếp tục mua sắm</a>
 </div>
 {% endblock %}

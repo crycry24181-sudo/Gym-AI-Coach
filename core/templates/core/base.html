@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,27 +18,82 @@
             flex-direction: column;
             min-height: 100vh;
         }
-        /* Style cho Navbar */
-        .navbar-brand {
-            font-weight: 900;
-            letter-spacing: 1px;
+
+        .navbar-brand { font-weight: 900; letter-spacing: 1px; }
+        .nav-link { color: rgba(255,255,255,.8)!important; }
+        .nav-link:hover { color: #ffc107!important; }
+        footer { margin-top: auto; }
+
+        /* ===== AI CHAT BUTTON ===== */
+        #ai-chat-toggle {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          background: #0d6efd;
+          color: #fff;
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          font-size: 26px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(0,0,0,.3);
+          z-index: 9999;
         }
-        .nav-link {
-            font-weight: 500;
-            color: rgba(255,255,255,0.8) !important;
-            transition: 0.3s;
+
+        /* ===== CHATBOX ===== */
+        #ai-chatbox {
+          position: fixed;
+          bottom: 90px;
+          right: 20px;
+          width: 320px;
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(0,0,0,.25);
+          display: flex;
+          flex-direction: column;
+          z-index: 9999;
         }
-        .nav-link:hover {
-            color: #ffc107 !important; /* Màu vàng khi di chuột vào */
+
+        #ai-chatbox.hidden { display: none; }
+
+        .ai-header {
+          background: #0d6efd;
+          color: #fff;
+          padding: 10px;
+          border-radius: 12px 12px 0 0;
+          display: flex;
+          justify-content: space-between;
         }
-        .auth-buttons a {
-            margin-left: 10px;
-            text-decoration: none;
-            font-weight: 500;
+
+        #ai-messages {
+          padding: 10px;
+          height: 260px;
+          overflow-y: auto;
+          background: #f8f9fa;
         }
-        /* Footer dính đáy */
-        footer {
-            margin-top: auto;
+
+        .msg {
+          margin-bottom: 8px;
+          padding: 8px 10px;
+          border-radius: 8px;
+          max-width: 80%;
+          font-size: 14px;
+        }
+
+        .msg.user { background: #d1e7ff; align-self: flex-end; }
+        .msg.ai { background: #e9ecef; align-self: flex-start; }
+
+        .ai-input { display: flex; border-top: 1px solid #ddd; }
+        .ai-input input { flex: 1; border: none; padding: 10px; outline: none; }
+        .ai-input button {
+          border: none;
+          background: #0d6efd;
+          color: #fff;
+          padding: 0 16px;
+          cursor: pointer;
         }
     </style>
 
@@ -45,96 +101,129 @@
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'index' %}">
-                GYM AI COACH <i class="fas fa-dumbbell text-warning"></i>
-            </a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'index' %}">
+      GYM AI COACH <i class="fas fa-dumbbell text-warning"></i>
+    </a>
+  </div>
+</nav>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+{% block content %}{% endblock %}
 
-            <div class="collapse navbar-collapse" id="navbarNav">
+<footer class="bg-dark text-white text-center py-3">
+  © 2026 Gym AI Coach
+</footer>
 
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'index' %}">Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'index' %}#list-exercises">Bài tập</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-warning" href="{% url 'store' %}">
-                            <i class="fas fa-shopping-cart"></i> Cửa hàng
-                        </a>
-                    </li>
+<!-- 🤖 AI CHAT BUTTON -->
+<div id="ai-chat-toggle">🤖</div>
 
-                    {% if user.is_staff %}
+<!-- 🤖 AI CHATBOX -->
+<div id="ai-chatbox" class="hidden">
+  <div class="ai-header">
+    <span>AI Coach</span>
+    <button id="ai-close">✖</button>
+  </div>
 
-                    <li class="nav-item ms-lg-3">
-                        <a class="nav-link btn btn-warning text-dark fw-bold px-3 rounded shadow-sm" href="{% url 'manage_orders' %}" style="color: #000 !important;">
-                            <i class="fas fa-clipboard-list me-1"></i> ĐƠN HÀNG
-                        </a>
-                    </li>
+  <div id="ai-messages"></div>
 
-                    <li class="nav-item ms-lg-2">
-                        <a class="nav-link btn btn-info text-dark fw-bold px-3 rounded shadow-sm" href="{% url 'manage_products' %}" style="color: #000 !important;">
-                            <i class="fas fa-boxes me-1"></i> KHO HÀNG
-                        </a>
-                    </li>
+  <div class="ai-input">
+    <input id="ai-text" type="text" placeholder="Hỏi AI Coach..." />
+    <button id="ai-send">Gửi</button>
+  </div>
+</div>
 
-                    <li class="nav-item ms-lg-2">
-                        <a class="nav-link btn btn-success text-white fw-bold px-3 rounded shadow-sm" href="{% url 'manage_exercises' %}">
-                            <i class="fas fa-dumbbell me-1"></i> QL BÀI TẬP
-                        </a>
-                    </li>
+<script>
+const toggleBtn = document.getElementById("ai-chat-toggle");
+const chatbox = document.getElementById("ai-chatbox");
+const closeBtn = document.getElementById("ai-close");
+const sendBtn = document.getElementById("ai-send");
+const input = document.getElementById("ai-text");
+const messages = document.getElementById("ai-messages");
 
-                    {% endif %}
-                </ul>
+toggleBtn.onclick = () => chatbox.classList.toggle("hidden");
+closeBtn.onclick = () => chatbox.classList.add("hidden");
 
-                <div class="d-flex align-items-center auth-buttons mt-3 mt-lg-0">
-                    {% if user.is_authenticated %}
-                        <span class="text-light me-3 d-none d-lg-block">Xin chào, <strong>{{ user.first_name }}</strong></span>
+sendBtn.onclick = sendMessage;
+input.addEventListener("keydown", e => { if (e.key === "Enter") sendMessage(); });
 
-                        <a href="{% url 'profile' %}" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-user-circle"></i> Hồ sơ
-                        </a>
+function addMessage(text, who) {
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.innerText = text;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
 
-                        <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">
-                            <i class="fas fa-sign-out-alt"></i> Thoát
-                        </a>
-                    {% else %}
-                        <a href="{% url 'login' %}" class="text-light me-3">Đăng nhập</a>
-                        <a href="{% url 'register' %}" class="btn btn-warning text-dark fw-bold btn-sm">
-                            Đăng ký ngay
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </nav>
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
 
-    {% if messages %}
-    <div class="container mt-3">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+  addMessage(text, "user");
+  input.value = "";
 
-    {% block content %}
-    {% endblock %}
+  try {
+    const res = await fetch("/api/ai/chat/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    });
+    const data = await res.json();
+    addMessage(data.reply || "AI chưa phản hồi.", "ai");
+  } catch {
+    addMessage("❌ Lỗi kết nối AI", "ai");
+  }
+}
+</script>
 
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-        <div class="container">
-            <p class="mb-0">&copy; 2026 Gym AI Coach. All rights reserved.</p>
-        </div>
-    </footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const chatToggle = document.getElementById("ai-chat-toggle");
+const chatBox = document.getElementById("ai-chatbox");
+const chatClose = document.getElementById("ai-close");
+const chatSend = document.getElementById("ai-send");
+const chatInput = document.getElementById("ai-text");
+const chatMessages = document.getElementById("ai-messages");
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+chatToggle.onclick = () => chatBox.classList.remove("hidden");
+chatClose.onclick = () => chatBox.classList.add("hidden");
+
+chatSend.onclick = sendMessage;
+chatInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") sendMessage();
+});
+
+function addMessage(text, type) {
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.innerText = text;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function sendMessage() {
+  const message = chatInput.value.trim();
+  if (!message) return;
+
+  addMessage(message, "user");
+  chatInput.value = "";
+
+  fetch("/api/ai/chat/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ message })
+  })
+  .then(res => res.json())
+  .then(data => {
+    addMessage(data.reply, "ai");
+  })
+  .catch(() => {
+    addMessage("❌ Lỗi kết nối AI", "ai");
+  });
+}
+</script>
+
 </body>
 </html>
