@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container" style="margin-top: 100px; margin-bottom: 50px;">
+    <a href="javascript:history.back()" class="btn btn-secondary mb-4"><i class="fas fa-arrow-left"></i> Quay lại</a>
+
+    <div class="row">
+        <div class="col-lg-7 mb-4">
+            <div class="card bg-black border-warning shadow-lg">
+                <div class="card-body p-1">
+                    {% if exercise.video_file %}
+                        {% if ".mp4" in exercise.video_file.url %}
+                            <div class="ratio ratio-16x9">
+                                <video controls autoplay loop class="rounded">
+                                    <source src="{{ exercise.video_file.url }}" type="video/mp4">
+                                </video>
+                            </div>
+                        {% else %}
+                            <img src="{{ exercise.video_file.url }}" class="img-fluid rounded w-100" alt="{{ exercise.title }}">
+                        {% endif %}
+                    {% else %}
+                        <div class="text-white text-center py-5">Chưa có video hướng dẫn</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <h1 class="text-warning fw-bold mb-3">{{ exercise.title }}</h1>
+            <span class="badge bg-danger fs-6 mb-4">Nhóm cơ: {{ exercise.get_muscle_group_display }}</span>
+
+            <div class="bg-dark text-white p-4 rounded border border-secondary">
+                <h4 class="border-bottom border-secondary pb-2 mb-3"><i class="fas fa-list-ul text-info"></i> Hướng dẫn thực hiện:</h4>
+                <div style="font-size: 1.1rem; line-height: 1.8; text-align: justify;">
+                    {{ exercise.description|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

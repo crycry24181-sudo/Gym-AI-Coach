@@ -97,6 +97,45 @@ class ProductImage(models.Model):
     def __str__(self):
         return f"Ảnh của {self.product.name}"
 
+
+# store/models.py
+
+class Exercise(models.Model):
+    title = models.CharField(max_length=200, verbose_name="Tên bài tập")
+
+    # 👇 Dùng FileField để chấp nhận cả GIF và Video (MP4)
+    video_file = models.FileField(
+        upload_to='exercises/videos/',
+        verbose_name="Video/GIF hướng dẫn",
+        blank=True, null=True
+    )
+
+    # Mô tả cách tập
+    description = models.TextField(blank=True, verbose_name="Hướng dẫn chi tiết")
+
+    # Phân loại nhóm cơ
+    MUSCLE_CHOICES = [
+        ('CHEST', 'Ngực'),
+        ('BACK', 'Lưng/Xô'),
+        ('LEGS', 'Chân/Mông'),
+        ('SHOULDERS', 'Vai'),
+        ('BICEPS', 'Tay trước'),
+        ('TRICEPS', 'Tay sau'),
+        ('ABS', 'Bụng'),
+        ('CARDIO', 'Tim mạch'),
+    ]
+    muscle_group = models.CharField(
+        max_length=50,
+        choices=MUSCLE_CHOICES,
+        default='CHEST',
+        verbose_name="Nhóm cơ"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
 from django.db import models
 
 # Create your models here.

@@ -1,0 +1,32 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container py-5" style="margin-top: 80px;">
+    <h2 class="text-center text-white mb-4">CÁC BÀI TẬP: <span class="text-warning">{{ current_name }}</span></h2>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for ex in exercises %}
+        <div class="col">
+            <div class="card h-100 bg-dark text-white border-secondary">
+                <div class="ratio ratio-4x3">
+                    {% if ex.video_file %}
+                        {% if ".mp4" in ex.video_file.url %}
+                            <video class="card-img-top object-fit-cover" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                                <source src="{{ ex.video_file.url }}" type="video/mp4">
+                            </video>
+                        {% else %}
+                            <img src="{{ ex.video_file.url }}" class="card-img-top object-fit-cover">
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning">{{ ex.title }}</h5>
+                    <a href="{% url 'exercise_detail' ex.id %}" class="btn btn-outline-light mt-2">Xem hướng dẫn tập</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-white text-center">Chưa có bài tập nào cho nhóm cơ này.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
