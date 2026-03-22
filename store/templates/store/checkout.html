@@ -1,61 +1,48 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<div class="container py-5" style="margin-top: 80px;">
-    <h1 class="text-center mb-4 text-uppercase fw-bold">💳 Thanh toán đơn hàng</h1>
+<div class="container py-5">
+    <h1 class="text-center mb-4">💳 THANH TOÁN ĐƠN HÀNG</h1>
 
     <form method="POST">
         {% csrf_token %}
         <div class="row">
             <div class="col-md-7">
-                <div class="card p-4 mb-4 shadow-sm border-0">
-                    <h4 class="mb-3 text-primary"><i class="fas fa-map-marker-alt me-2"></i>Thông tin giao hàng</h4>
+                <div class="card p-4 mb-4">
+                    <h4 class="mb-3">📍 Thông tin giao hàng</h4>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Họ và tên</label>
+                        <label>Họ và tên</label>
                         <input type="text" name="full_name" class="form-control" value="{{ user_info.full_name }}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Email</label>
+                        <label>Email</label>
                         <input type="email" name="email" class="form-control" value="{{ user_info.email }}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Số điện thoại</label>
+                        <label>Số điện thoại</label>
                         <input type="text" name="phone" class="form-control" value="{{ user_info.phone }}" required placeholder="Nhập SĐT để shipper gọi">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Địa chỉ nhận hàng</label>
+                        <label>Địa chỉ nhận hàng</label>
                         <textarea name="address" class="form-control" rows="3" required placeholder="Số nhà, đường, phường, quận...">{{ user_info.address }}</textarea>
                     </div>
                 </div>
 
-                <div class="card p-4 shadow-sm border-0">
-                    <h4 class="mb-3 text-primary"><i class="fas fa-credit-card me-2"></i>Phương thức thanh toán</h4>
-
-                    <div class="form-check mb-3 border p-3 rounded bg-light">
-                        <input class="form-check-input" type="radio" name="payment_method" value="cod" id="cod" checked>
-                        <label class="form-check-label fw-bold" for="cod">
-                            <i class="fas fa-truck text-secondary me-2"></i> Thanh toán khi nhận hàng (COD)
-                        </label>
+                <div class="card p-4">
+                    <h4 class="mb-3">💳 Phương thức thanh toán</h4>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="payment_method" value="COD" id="cod" checked>
+                        <label class="form-check-label" for="cod">Thanh toán khi nhận hàng (COD)</label>
                     </div>
-
-                    <div class="form-check mb-3 border p-3 rounded bg-light">
-                        <input class="form-check-input" type="radio" name="payment_method" value="transfer" id="transfer">
-                        <label class="form-check-label fw-bold" for="transfer">
-                            <i class="fas fa-university text-success me-2"></i> Chuyển khoản Ngân hàng (VietQR)
-                        </label>
-                    </div>
-
-                    <div class="form-check border p-3 rounded bg-light">
-                        <input class="form-check-input" type="radio" name="payment_method" value="momo" id="momo">
-                        <label class="form-check-label fw-bold" for="momo">
-                            <i class="fas fa-wallet text-danger me-2"></i> Ví điện tử MoMo
-                        </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="payment_method" value="BANK" id="bank">
+                        <label class="form-check-label" for="bank">Chuyển khoản ngân hàng (QR Code)</label>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-5">
-                <div class="card p-4 bg-light shadow-sm border-0">
-                    <h4 class="mb-3 text-primary"><i class="fas fa-shopping-cart me-2"></i>Đơn hàng của bạn</h4>
+                <div class="card p-4 bg-light">
+                    <h4 class="mb-3">📦 Đơn hàng của bạn</h4>
 
                     <ul class="list-group mb-3">
                         {% for item in cart.items.all %}
@@ -88,14 +75,12 @@
                         <button type="button" class="btn btn-secondary">Áp dụng</button>
                     </div>
 
-                    <div class="d-flex justify-content-between border-top pt-3 mt-3">
-                        <span class="fs-5">Tổng tiền thanh toán:</span>
-                        <strong class="text-danger fs-4">{{ cart.total_price }} đ</strong>
-                    </div>
+                    <h3 class="d-flex justify-content-between">
+                        <span>Tổng tiền:</span>
+                        <strong class="text-danger">{{ cart.total_price }} đ</strong>
+                    </h3>
 
-                    <button type="submit" class="btn btn-primary w-100 btn-lg mt-4 rounded-pill shadow">
-                        <i class="fas fa-check-circle me-2"></i> XÁC NHẬN ĐẶT HÀNG
-                    </button>
+                    <button type="submit" class="btn btn-primary w-100 btn-lg mt-3">XÁC NHẬN THANH TOÁN</button>
                 </div>
             </div>
         </div>

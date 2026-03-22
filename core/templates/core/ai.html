@@ -1,0 +1,49 @@
+<h2>AI Coach</h2>
+
+<form id="ai-form">
+  <input name="age" placeholder="Tuổi" required>
+  <input name="height" placeholder="Chiều cao (cm)" required>
+  <input name="weight" placeholder="Cân nặng (kg)" required>
+
+  <select name="gender">
+    <option value="male">Nam</option>
+    <option value="female">Nữ</option>
+  </select>
+
+  <select name="goal">
+    <option value="gain_muscle">Tăng cơ</option>
+    <option value="lose_weight">Giảm mỡ</option>
+  </select>
+
+  <button type="submit">Xem kết quả AI</button>
+</form>
+
+<hr>
+
+<div id="ai-result"></div>
+
+<script>
+document.getElementById("ai-form").onsubmit = async function(e) {
+    e.preventDefault();
+
+    const data = Object.fromEntries(new FormData(this).entries());
+
+    const res = await fetch("/api/ai/recommend/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    document.getElementById("ai-result").innerHTML = `
+        <h3>Kết quả AI Coach</h3>
+        <p><b>BMI:</b> ${result.bmi}</p>
+        <p><b>BMR:</b> ${result.bmr}</p>
+        <p><b>TDEE:</b> ${result.tdee}</p>
+        <p><b>Calo đề xuất:</b> ${result.recommended_calories}</p>
+        <p><b>Lịch tập:</b> ${result.workout_plan}</p>
+        <p><b>Chế độ ăn:</b> ${result.diet}</p>
+    `;
+};
+</script>

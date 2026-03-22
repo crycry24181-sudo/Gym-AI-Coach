@@ -1,6 +1,5 @@
 from django import forms
 from .models import Product
-from .models import Exercise
 
 # 👇 Tạo Widget tùy chỉnh kế thừa từ FileInput để hỗ trợ chọn nhiều tệp
 class MultipleFileInput(forms.FileInput):
@@ -36,18 +35,4 @@ class ProductForm(forms.ModelForm):
 
         labels = {
             'image': 'Ảnh đại diện (Hiện ngoài trang chủ)'
-        }
-
-
-class ExerciseForm(forms.ModelForm):
-    class Meta:
-        model = Exercise
-        fields = ['title', 'muscle_group', 'video_file', 'description']
-
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên bài tập...'}),
-            'muscle_group': forms.Select(attrs={'class': 'form-select'}),
-            'video_file': forms.FileInput(attrs={'class': 'form-control'}),  # Ô chọn file
-            'description': forms.Textarea(
-                attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Mô tả cách tập...'}),
         }

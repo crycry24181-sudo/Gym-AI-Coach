@@ -1,12 +1,10 @@
 from django.contrib import admin
-from .models import Product, ProductImage, Order, OrderItem, Exercise
+from .models import Product, ProductImage, Order, OrderItem
 
-
-# ================= QUẢN LÝ SẢN PHẨM =================
+# Tạo form nhập ảnh phụ nằm gọn trong trang sản phẩm chính
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1  # Số dòng trống hiển thị sẵn để up ảnh
-
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -15,7 +13,6 @@ class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline]
 
 
-# ================= QUẢN LÝ ĐƠN HÀNG =================
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
@@ -37,16 +34,3 @@ class OrderAdmin(admin.ModelAdmin):
     # 4. Các trường cho phép sửa
     fields = ('user', 'full_name', 'email', 'phone', 'address', 'total_amount', 'payment_method', 'status',
               'cancel_reason')
-
-
-# ================= QUẢN LÝ BÀI TẬP (MỚI) =================
-@admin.register(Exercise)
-class ExerciseAdmin(admin.ModelAdmin):
-    # Hiển thị các cột: Tên bài, Nhóm cơ, Ngày tạo
-    list_display = ('title', 'muscle_group', 'created_at')
-
-    # Thanh tìm kiếm theo tên bài tập
-    search_fields = ('title',)
-
-    # Bộ lọc bên phải theo nhóm cơ (Lọc này an toàn với MongoDB vì không phải quan hệ bảng)
-    list_filter = ('muscle_group',)
