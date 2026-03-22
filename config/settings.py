@@ -1,8 +1,10 @@
 from pathlib import Path
 import os  # <-- BẮT BUỘC PHẢI CÓ DÒNG NÀY
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -13,7 +15,7 @@ SECRET_KEY = 'django-insecure-#c*shwbotcu-t%zqq3mq65s@&_%+p1g_l=2#ao=w44qv#f4d!1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -73,10 +75,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'gym_ai_db',
+        'NAME': 'GymStoreDB', # Bạn có thể giữ nguyên tên DB cũ của bạn ở đây
         'ENFORCE_SCHEMA': False,
         'CLIENT': {
-            'host': 'mongodb://localhost:27017/',
+            'host': 'mongodb+srv://cuong2k500_db_user:lw7kd6vY18VVc8LI@doan.p6yy389.mongodb.net/?appName=DOAN'
         }
     }
 }
@@ -137,3 +139,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev']

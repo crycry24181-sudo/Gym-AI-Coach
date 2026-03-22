@@ -7,79 +7,123 @@
         <i class="fas fa-tasks"></i> Trang Quản Lý Đơn Hàng
     </h2>
 
-    <div class="card shadow-sm">
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-success shadow-sm h-100 border-0">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase mb-2" style="opacity: 0.8;">TỔNG DOANH THU (Tất cả)</h6>
+                    <h3 class="mb-0 fw-bold">{{ total_revenue|default:0|floatformat:0 }} VNĐ</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-primary shadow-sm h-100 border-0">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase mb-2" style="opacity: 0.8;">ĐƠN THÀNH CÔNG</h6>
+                    <h3 class="mb-0 fw-bold">{{ total_completed_count|default:0 }} Đơn</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-warning shadow-sm h-100 border-0">
+                <div class="card-body text-center">
+                    <h6 class="text-uppercase mb-2" style="opacity: 0.9; color: #333;">CHỜ XÁC NHẬN</h6>
+                    <h3 class="mb-0 fw-bold" style="color: #333;">{{ pending_orders_count|default:0 }} Đơn</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line text-primary me-2"></i>Phân tích xu hướng doanh thu</h5>
+
+            <div class="d-flex align-items-center">
+                <span class="me-2 small fw-bold">Chọn tháng:</span>
+                <select id="monthSelector" class="form-select form-select-sm shadow-sm" style="width: 140px;">
+                    {% for m in unique_months %}
+                    <option value="{{ m }}">{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
         <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <p class="text-muted mb-1 small">Tổng doanh thu của tháng được chọn:</p>
+                    <h2 id="monthTotalDisplay" class="fw-bold text-success">0 VNĐ</h2>
+                </div>
+            </div>
+            <div style="height: 320px; position: relative;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-list me-2"></i>Danh sách đơn hàng hiện tại</h5>
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-dark text-center">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-secondary text-center">
                         <tr>
                             <th>ID</th>
                             <th>Khách hàng</th>
                             <th>Sản phẩm đặt mua</th>
                             <th>Tổng tiền</th>
-                            <th>Ngày đặt</th>
-                            <th style="width: 200px;">Trạng thái</th>
-                            <th>Lý do hủy (Nếu có)</th>
+                            <th>Cập nhật trạng thái</th>
                             <th>Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for order in orders %}
                         <tr>
-                            <form method="POST">
-                                {% csrf_token %}
-                                <input type="hidden" name="order_id" value="{{ order.id }}">
-
-                                <td class="fw-bold text-center">#{{ order.id }}</td>
-
-                                <td>
-                                    <strong>{{ order.full_name }}</strong><br>
-                                    <small>{{ order.phone }}</small><br>
-                                    <small class="text-muted">{{ order.address }}</small>
-                                </td>
-
-                                <td>
-                                    <ul class="list-unstyled mb-0 small">
-                                        {% for item in order.items.all %}
-                                        <li>• {{ item.product.name }} <span class="text-danger fw-bold">(x{{ item.quantity }})</span></li>
-                                        {% endfor %}
-                                    </ul>
-                                </td>
-
-                                <td class="text-danger fw-bold text-center">{{ order.total_amount }} đ</td>
-                                <td class="text-center small">{{ order.created_at|date:"d/m/Y H:i" }}</td>
-
-                                <td>
-                                    <select name="status" class="form-select form-select-sm fw-bold
-                                        {% if order.status == 'PENDING' %}text-warning
-                                        {% elif order.status == 'CONFIRMED' %}text-primary
-                                        {% elif order.status == 'SHIPPING' %}text-info
-                                        {% elif order.status == 'COMPLETED' %}text-success
-                                        {% elif order.status == 'CANCELLED' %}text-danger{% endif %}">
-
-                                        <option value="PENDING" {% if order.status == 'PENDING' %}selected{% endif %}>🕒 Chờ xác nhận</option>
-                                        <option value="CONFIRMED" {% if order.status == 'CONFIRMED' %}selected{% endif %}>🔵 Đã xác nhận</option>
-                                        <option value="SHIPPING" {% if order.status == 'SHIPPING' %}selected{% endif %}>🚚 Đang giao</option>
-                                        <option value="COMPLETED" {% if order.status == 'COMPLETED' %}selected{% endif %}>✅ Hoàn thành</option>
-                                        <option value="CANCELLED" {% if order.status == 'CANCELLED' %}selected{% endif %}>⛔ Đã hủy</option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <textarea name="cancel_reason" class="form-control form-control-sm" rows="1" placeholder="Nhập lý do hủy...">{{ order.cancel_reason|default:'' }}</textarea>
-                                </td>
-
-                                <td class="text-center">
-                                    <button type="submit" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-save"></i> Lưu
-                                    </button>
-                                </td>
-                            </form>
+                            <td class="fw-bold text-center">#{{ order.id }}</td>
+                            <td>
+                                <div class="fw-bold text-primary">{{ order.full_name }}</div>
+                                <div class="small text-muted"><i class="fas fa-phone-alt me-1"></i>{{ order.phone }}</div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    {% for item in order.items.all %}
+                                        <div class="mb-1">• {{ item.product.name }} <span class="badge bg-light text-dark">x{{ item.quantity }}</span></div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="text-danger fw-bold text-center">
+                                {{ order.total_amount|floatformat:0 }}đ
+                            </td>
+                            <td>
+                                <form id="order-form-{{ order.id }}" method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                                    <div class="mb-2">
+                                        <select name="status" class="form-select form-select-sm fw-bold
+                                            {% if order.status == 'PENDING' %}border-warning text-warning
+                                            {% elif order.status == 'CONFIRMED' %}border-primary text-primary
+                                            {% elif order.status == 'SHIPPING' %}border-info text-info
+                                            {% elif order.status == 'COMPLETED' %}border-success text-success
+                                            {% elif order.status == 'CANCELLED' %}border-danger text-danger{% endif %}">
+                                            <option value="PENDING" {% if order.status == 'PENDING' %}selected{% endif %}>🕒 Chờ xác nhận</option>
+                                            <option value="CONFIRMED" {% if order.status == 'CONFIRMED' %}selected{% endif %}>🔵 Đã xác nhận</option>
+                                            <option value="SHIPPING" {% if order.status == 'SHIPPING' %}selected{% endif %}>🚚 Đang giao</option>
+                                            <option value="COMPLETED" {% if order.status == 'COMPLETED' %}selected{% endif %}>✅ Hoàn thành</option>
+                                            <option value="CANCELLED" {% if order.status == 'CANCELLED' %}selected{% endif %}>⛔ Đã hủy</option>
+                                        </select>
+                                    </div>
+                                    <textarea name="cancel_reason" class="form-control form-control-sm" rows="1" placeholder="Lý do hủy...">{{ order.cancel_reason|default:'' }}</textarea>
+                                </form>
+                            </td>
+                            <td class="text-center">
+                                <button type="submit" form="order-form-{{ order.id }}" class="btn btn-primary btn-sm px-3 shadow-sm fw-bold">
+                                    <i class="fas fa-save me-1"></i> Lưu
+                                </button>
+                            </td>
                         </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="8" class="text-center py-4">Chưa có đơn hàng nào.</td>
-                        </tr>
+                        <tr><td colspan="6" class="text-center py-5 text-muted">Hệ thống chưa có đơn hàng nào.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -87,4 +131,88 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Nhận dữ liệu JSON từ Django gửi qua
+    const chartData = {{ chart_data_json|safe }};
+    const canvasCtx = document.getElementById('revenueChart').getContext('2d');
+    let lineChart;
+
+    function renderRevenueChart(selectedMonth) {
+        // 1. Lọc dữ liệu theo tháng được chọn từ Dropdown
+        const filteredData = chartData.filter(d => d.month === selectedMonth);
+
+        // 2. Gom nhóm tổng tiền theo ngày (đề phòng một ngày có nhiều đơn)
+        const daySummary = {};
+        let monthGrandTotal = 0;
+
+        filteredData.forEach(d => {
+            const dayNum = d.date.split('-')[2]; // Cắt lấy phần Ngày từ chuỗi "YYYY-MM-DD"
+            daySummary[dayNum] = (daySummary[dayNum] || 0) + d.amount;
+            monthGrandTotal += d.amount;
+        });
+
+        // 3. Chuẩn bị Labels (Ngày) và Data (Tiền)
+        const sortedDays = Object.keys(daySummary).sort((a, b) => a - b);
+        const dataPoints = sortedDays.map(day => daySummary[day]);
+
+        // 4. Cập nhật số tiền hiển thị trên đầu biểu đồ
+        document.getElementById('monthTotalDisplay').innerText = monthGrandTotal.toLocaleString('vi-VN') + ' VNĐ';
+
+        // 5. Vẽ/Cập nhật biểu đồ đường
+        if (lineChart) { lineChart.destroy(); }
+
+        lineChart = new Chart(canvasCtx, {
+            type: 'line',
+            data: {
+                labels: sortedDays.map(day => 'Ngày ' + day),
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: dataPoints,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4, // Tạo độ cong cho biểu đồ đường
+                    fill: true,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#0d6efd',
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Doanh thu: ' + context.parsed.y.toLocaleString('vi-VN') + ' VNĐ';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: value => value.toLocaleString('vi-VN') + 'đ' }
+                    }
+                }
+            }
+        });
+    }
+
+    // Lắng nghe sự kiện đổi tháng
+    document.getElementById('monthSelector').addEventListener('change', function() {
+        renderRevenueChart(this.value);
+    });
+
+    // Tự động vẽ lần đầu cho tháng mới nhất có trong danh sách
+    const firstMonth = document.getElementById('monthSelector').value;
+    if (firstMonth) {
+        renderRevenueChart(firstMonth);
+    }
+</script>
 {% endblock %}

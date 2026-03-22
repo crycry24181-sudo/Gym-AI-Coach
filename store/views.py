@@ -5,6 +5,9 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.mail import send_mail
 from django.conf import settings
+from collections import defaultdict
+import json
+from datetime import datetime
 
 # Import Models và Forms
 from .models import Product, ProductImage, Cart, CartItem, Order, OrderItem, Exercise
@@ -356,3 +359,65 @@ def delete_exercise(request, pk):
     exercise.delete()
     messages.success(request, 'Đã xóa bài tập!')
     return redirect('manage_exercises')
+
+
+@staff_member_required(login_url='login')
+def manage_orders(request):
+    """Quản lý đơn hàng + Gửi mail + Dữ liệu Biểu đồ đường theo tháng"""
+
+    # --- PHẦN 1: XỬ LÝ CẬP NHẬT TRẠNG THÁI (Giữ nguyên logic của bạn) ---
+    if request.method == 'POST':
+        try:
+            order_id = request.POST.get('order_id')
+            new_status = request.POST.get('status')
+            cancel_reason = request.POST.get('cancel_reason')
+            order = Order.objects.get(id=order_id)
+            old_status = order.status
+            order.status = new_status
+            if cancel_reason: order.cancel_reason = cancel_reason
+            if new_status == 'COMPLETED': order.is_paid = True
+            order.save()
+
+            if old_status != new_status:
+                # ... (Phần logic gửi mail của bạn giữ nguyên ở đây) ...
+                subject = f"Thông báo đơn hàng #{order.id}"
+                message = f"Trạng thái đơn hàng của bạn đã chuyển sang: {new_status}"
+                if order.email:
+                    EmailThread(subject, message, [order.email]).start()
+
+            messages.success(request, f"Đã cập nhật đơn hàng #{order_id}!")
+        except Order.DoesNotExist:
+            messages.error(request, "Không tìm thấy đơn hàng!")
+
+    # --- PHẦN 2: CHUẨN BỊ DỮ LIỆU THỐNG KÊ & BIỂU ĐỒ ---
+    orders = Order.objects.all().order_by('-created_at')
+    completed_orders = Order.objects.filter(status='COMPLETED')
+
+    # 2.1 Con số tổng quát cho Dashboard
+    total_revenue = sum(order.total_amount for order in completed_orders if order.total_amount)
+    total_completed_count = completed_orders.count()
+    pending_orders_count = Order.objects.filter(status='PENDING').count()
+
+    # 2.2 Chuẩn bị dữ liệu chi tiết cho Biểu đồ (Gửi sang JS xử lý)
+    chart_data = []
+    for order in completed_orders:
+        if order.created_at and order.total_amount:
+            chart_data.append({
+                'date': order.created_at.strftime('%Y-%m-%d'),  # Để sắp xếp ngày
+                'month': order.created_at.strftime('%m/%Y'),  # Để JS lọc theo tháng
+                'amount': float(order.total_amount)
+            })
+
+    # 2.3 Lấy danh sách các "Tháng/Năm" duy nhất để làm Dropdown chọn tháng
+    unique_months = sorted(list(set(item['month'] for item in chart_data)),
+                           key=lambda x: datetime.strptime(x, '%m/%Y'), reverse=True)
+
+    # --- PHẦN 3: TRẢ DỮ LIỆU ---
+    return render(request, 'store/manage_orders.html', {
+        'orders': orders,
+        'total_revenue': total_revenue,
+        'total_completed_count': total_completed_count,
+        'pending_orders_count': pending_orders_count,
+        'unique_months': unique_months,
+        'chart_data_json': json.dumps(chart_data),  # Dữ liệu thô gửi cho JavaScript vẽ biểu đồ
+    })
