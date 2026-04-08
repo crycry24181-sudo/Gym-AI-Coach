@@ -1,16 +1,14 @@
 from pathlib import Path
-import os  # <-- BẮT BUỘC PHẢI CÓ DÒNG NÀY
+import os
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#c*shwbotcu-t%zqq3mq65s@&_%+p1g_l=2#ao=w44qv#f4d!1'
+# --- BẢO MẬT: Lấy Secret Key từ file .env ---
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -18,7 +16,6 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -26,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',
+    'django.contrib.humanize', # Bắt buộc để dùng |intcomma
 
     # --- CÁC APP CỦA DỰ ÁN ---
     'core',
@@ -52,7 +49,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [], # Có thể để trống nếu template nằm trong thư mục app
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -66,75 +63,45 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-# --- CẤU HÌNH MONGODB (DJONGO) ---
-# config/settings.py
-
+# --- CẤU HÌNH MONGODB (BẢO MẬT) ---
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'GymStoreDB', # Bạn có thể giữ nguyên tên DB cũ của bạn ở đây
+        'NAME': 'GymStoreDB',
         'ENFORCE_SCHEMA': False,
         'CLIENT': {
-            'host': 'mongodb+srv://cuong2k500_db_user:lw7kd6vY18VVc8LI@doan.p6yy389.mongodb.net/?appName=DOAN'
+            # Lấy link host từ file .env để không bị lộ trên GitHub
+            'host': os.getenv('DATABASE_URL')
         }
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
-
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'vi'
-
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
-
 USE_I18N = True
-USE_L10N = True
-
+USE_L10N = True  # Quan trọng: Bật để nhận diện định dạng Việt Nam
 USE_TZ = True
-USE_THOUSAND_SEPARATOR = True
+USE_THOUSAND_SEPARATOR = True # Quan trọng: Để hiện dấu chấm 1.650.000
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# --- CẤU HÌNH ĐƯỜNG DẪN ẢNH (QUAN TRỌNG) ---
-# Đoạn này giúp Django tìm thấy folder "DOAN/static"
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
+# Media files (Ảnh sản phẩm, Video bài tập)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# --- CẤU HÌNH EMAIL ---
 EMAIL_BACKEND = 'core.email_backend.FixedEmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
