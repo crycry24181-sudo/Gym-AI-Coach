@@ -2,48 +2,64 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-5" style="margin-top: 80px; min-height: 80vh;">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-success text-white text-center py-3">
-                    <h3 class="mb-0 fw-bold"><i class="fas fa-plus-circle"></i> THÊM SẢN PHẨM MỚI</h3>
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <h3 class="mb-0 fw-bold text-uppercase">
+                        <i class="fas fa-plus-circle me-2"></i> Thêm Sản Phẩm Mới
+                    </h3>
                 </div>
-                <div class="card-body p-4">
+                <div class="card-body p-4 bg-light">
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
 
                         <div class="mb-3">
-                            <label class="fw-bold mb-1">Tên sản phẩm</label>
+                            <label class="fw-bold mb-2 text-dark"><i class="fas fa-tag me-1 text-success"></i> Tên sản phẩm</label>
                             {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold mb-2 text-dark"><i class="fas fa-list me-1 text-success"></i> Danh mục</label>
+                            {{ form.category }}
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="fw-bold mb-1">Danh mục</label>
-                                {{ form.category }}
+                                <label class="fw-bold mb-2 text-dark"><i class="fas fa-file-invoice-dollar me-1 text-success"></i> Giá nhập (VNĐ)</label>
+                                {{ form.import_price }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="fw-bold mb-1">Giá bán (VNĐ)</label>
+                                <label class="fw-bold mb-2 text-dark"><i class="fas fa-money-bill-wave me-1 text-success"></i> Giá bán lẻ (VNĐ)</label>
                                 {{ form.price }}
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="fw-bold mb-1">Ảnh đại diện</label>
-                            {{ form.image }}
+                            <label class="fw-bold mb-2 text-dark"><i class="fas fa-image me-1 text-success"></i> Ảnh đại diện sản phẩm</label>
+                            <div class="input-group">
+                                {{ form.image }}
+                            </div>
+                            <small class="text-muted italic">Nên chọn ảnh vuông (1:1) để hiển thị đẹp nhất.</small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="fw-bold mb-1">Mô tả sản phẩm</label>
+                            <label class="fw-bold mb-2 text-dark"><i class="fas fa-align-left me-1 text-success"></i> Mô tả chi tiết</label>
                             {{ form.description }}
                         </div>
 
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-success btn-lg fw-bold">
-                                <i class="fas fa-save"></i> LƯU SẢN PHẨM
+                        <div class="d-grid gap-3 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm py-3 text-uppercase">
+                                <i class="fas fa-save me-2"></i> Lưu sản phẩm ngay
                             </button>
-                            <a href="{% url 'store' %}" class="btn btn-outline-secondary">Hủy bỏ</a>
+
+                            <a href="{% url 'store:manage_products' %}" class="btn btn-outline-secondary fw-bold py-2 shadow-sm">
+                                <i class="fas fa-times me-1"></i> Hủy bỏ & Quay lại
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -51,4 +67,27 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Làm đẹp các ô nhập liệu render từ Django Form */
+    input[type="text"], input[type="number"], select, textarea, input[type="file"] {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    input:focus, select:focus, textarea:focus {
+        border-color: #198754;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+    }
+</style>
 {% endblock %}

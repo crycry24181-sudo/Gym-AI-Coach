@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản trị - GYM ERP</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { background-color: #f4f6f8; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        .erp-container { display: flex; height: 100vh; overflow: hidden; }
+
+        /* CỘT SIDEBAR BÊN TRÁI CỐ ĐỊNH */
+        .erp-sidebar { width: 260px; background: #fff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+        .erp-sidebar-header { padding: 24px; border-bottom: 1px solid #f1f5f9; }
+        .erp-sidebar-menu { flex-grow: 1; padding: 24px 0; overflow-y: auto; }
+
+        .erp-menu-item { display: flex; align-items: center; padding: 12px 24px; color: #64748b; text-decoration: none; font-weight: 500; transition: all 0.2s ease; font-size: 0.95rem; }
+        .erp-menu-item i { width: 24px; font-size: 1.1rem; opacity: 0.7; }
+        .erp-menu-item:hover { background: #f8fafc; color: #0f172a; }
+        .erp-menu-item.active { background: #eff6ff; color: #2563eb; border-right: 3px solid #2563eb; }
+        .erp-menu-item.active i { opacity: 1; }
+
+        /* KHU VỰC NỘI DUNG BÊN PHẢI CÓ THỂ CUỘN */
+        .erp-content-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .erp-header { background: #fff; height: 60px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: flex-end; padding: 0 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .erp-main-content { flex-grow: 1; padding: 32px; overflow-y: auto; }
+
+        /* Nút quay lại trang web */
+        .btn-back-web { color: #64748b; font-size: 0.9rem; text-decoration: none; font-weight: 500; }
+        .btn-back-web:hover { color: #0f172a; }
+    </style>
+</head>
+<body>
+
+<div class="erp-container">
+
+    <div class="erp-sidebar d-none d-md-flex">
+        <div class="erp-sidebar-header">
+            <h5 class="fw-bold m-0" style="color: #0f172a; letter-spacing: 1px;">
+                <i class="fas fa-dumbbell text-primary me-2"></i>GYM ERP
+            </h5>
+        </div>
+        <div class="erp-sidebar-menu">
+            <a href="{% url 'store:admin_dashboard' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+
+            {% if request.user.is_superuser %}
+                <a href="{% url 'store:manage_orders' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_orders' %}active{% endif %}"><i class="fas fa-receipt"></i> Đơn hàng</a>
+                <a href="{% url 'store:manage_products' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_products' %}active{% endif %}"><i class="fas fa-box"></i> Kho hàng & Sản phẩm</a>
+                <a href="{% url 'store:manage_exercises' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_exercises' %}active{% endif %}"><i class="fas fa-dumbbell"></i> Quản lý Bài tập</a>
+                <a href="{% url 'store:manage_customers' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_customers' %}active{% endif %}"><i class="fas fa-users"></i> Khách hàng</a>
+
+            {% else %}
+                {% for group in request.user.groups.all %}
+                    {% if group.name == 'Kho' %}
+                        <a href="{% url 'store:manage_orders' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_orders' %}active{% endif %}"><i class="fas fa-receipt"></i> Đơn hàng</a>
+                        <a href="{% url 'store:manage_products' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_products' %}active{% endif %}"><i class="fas fa-box"></i> Kho hàng & Sản phẩm</a>
+                    {% elif group.name == 'PT' %}
+                        <a href="{% url 'store:manage_exercises' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_exercises' %}active{% endif %}"><i class="fas fa-dumbbell"></i> Quản lý Bài tập</a>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="erp-content-wrapper">
+        <div class="erp-header">
+            <a href="/" class="btn-back-web"><i class="fas fa-external-link-alt me-2"></i>Xem trang web</a>
+            <span class="mx-3 text-muted">|</span>
+            <span class="fw-semibold text-dark"><i class="fas fa-user-shield me-2"></i>Xin chào, {{ request.user.username|default:"Admin" }}</span>
+        </div>
+
+        <div class="erp-main-content">
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -8,6 +8,9 @@ from django.conf import settings
 from collections import defaultdict
 import json
 from datetime import datetime
+from django.utils import timezone
+from django.contrib.auth.models import User, Group
+from django.http import JsonResponse
 
 # Import Models và Forms
 from .models import Product, ProductImage, Cart, CartItem, Order, OrderItem, Exercise
@@ -60,7 +63,18 @@ def product_detail(request, pk):
 # ================= TRANG BÀI TẬP (USER - PUBLIC) =================
 
 def exercise_list(request, muscle_group=None):
-    """Hiển thị danh sách bài tập (có lọc theo nhóm cơ)"""
+    # 1. Định nghĩa nội dung lợi ích cho từng nhóm cơ
+    benefits_data = {
+        'CHEST': 'Tập ngực giúp cơ thể phát triển cân đối và mạnh mẽ hơn, đặc biệt làm cho phần thân trên trở nên đầy đặn, rõ nét và nam tính hơn. Khi tập ngực, bạn không chỉ tăng kích thước cơ ngực mà còn cải thiện sức mạnh tổng thể, hỗ trợ tốt cho vai và tay sau trong các hoạt động hằng ngày như đẩy hoặc nâng vật nặng. Ngoài ra, cơ ngực khỏe còn góp phần cải thiện tư thế, giúp giữ vai ổn định hơn và hạn chế tình trạng gù lưng nếu kết hợp tập luyện hợp lý với lưng. Việc tăng khối lượng cơ cũng giúp cơ thể đốt nhiều calo hơn, hỗ trợ duy trì vóc dáng.',
+        'BACK': 'Tập lưng xô giúp mở rộng phần thân trên, tạo dáng chữ V rõ ràng (vai rộng – eo nhỏ), từ đó làm tổng thể cơ thể nhìn cân đối và mạnh mẽ hơn. Ngoài yếu tố thẩm mỹ, lưng xô còn đóng vai trò quan trọng trong các động tác kéo và giữ ổn định cột sống, giúp giảm nguy cơ gù lưng nếu tập đúng cách..',
+        'LEGS': 'Đây là nhóm cơ quan trọng nhất nhưng nhiều người lại hay bỏ qua. Chân và mông giúp bạn di chuyển, giữ thăng bằng, tăng sức mạnh toàn thân và còn kích thích cơ thể phát triển tốt hơn (do liên quan đến hormone). Nếu chân yếu thì gần như toàn bộ sức mạnh cơ thể cũng bị hạn chế.',
+        'SHOULDERS': 'Cơ vai giúp thân trên trông rộng hơn, đặc biệt là phần vai ngang (vai giữa) tạo cảm giác “to khung người”. Vai khỏe cũng giúp bạn thực hiện tốt các động tác nâng, đẩy và hỗ trợ cho ngực, lưng trong nhiều bài tập khác. Ngoài ra, vai còn giúp ổn định khớp vai, giảm chấn thương nếu tập đúng kỹ thuật.',
+        'BICEPS': 'Tay trước giúp tăng lực kéo và đóng vai trò lớn trong các bài tập lưng. Khi phát triển tốt, bắp tay sẽ nổi rõ, tạo cảm giác khỏe và thẩm mỹ hơn. Tuy không phải nhóm cơ lớn nhưng rất dễ thấy khi mặc áo ngắn tay.',
+        'TRICEPS': 'Tay sau chiếm khoảng 2/3 kích thước bắp tay, nên nếu muốn tay to thì phải tập kỹ phần này. Nó giúp tăng lực đẩy trong các bài như ngực và vai, đồng thời làm cánh tay trông dày và chắc hơn.',
+        'ABS': 'Cơ bụng không chỉ để có múi mà còn là trung tâm giữ ổn định toàn bộ cơ thể (core). Nó giúp bạn giữ thăng bằng, hỗ trợ gần như tất cả các bài tập từ nhẹ đến nặng, và giảm nguy cơ đau lưng. Một core khỏe giúp tập nặng an toàn hơn.',
+        'CARDIO': 'Cardio giúp tăng sức bền tim mạch, cải thiện hô hấp, đốt mỡ và giúp cơ thể khỏe lâu dài chứ không chỉ đẹp bên ngoài. Nó cũng hỗ trợ phục hồi và giúp bạn không bị “đuối” khi tập tạ.',
+    }
+
     if muscle_group:
         exercises = Exercise.objects.filter(muscle_group=muscle_group).order_by('-created_at')
         muscle_names = {
@@ -74,20 +88,38 @@ def exercise_list(request, muscle_group=None):
             'CARDIO': 'TIM MẠCH'
         }
         current_name = muscle_names.get(muscle_group, muscle_group)
+        # Lấy lợi ích tương ứng, nếu không có thì để trống hoặc câu mặc định
+        benefit_text = benefits_data.get(muscle_group, "Tập luyện nhóm cơ này giúp bạn có hình thể cân đối và khỏe mạnh.")
     else:
         exercises = Exercise.objects.all().order_by('-created_at')
         current_name = "Tất cả bài tập"
+        benefit_text = "Khám phá kho bài tập đa dạng để xây dựng lộ trình tập luyện toàn diện cho bản thân."
 
     return render(request, 'exercises/exercise_list.html', {
         'exercises': exercises,
-        'current_name': current_name
+        'current_name': current_name,
+        'benefit_text': benefit_text  # Gửi biến này sang HTML
     })
 
 
+
+
+
 def exercise_detail(request, pk):
-    """Xem chi tiết 1 bài tập"""
+    # 1. Lấy bài tập hiện tại khách đang xem
     exercise = get_object_or_404(Exercise, pk=pk)
-    return render(request, 'exercises/exercise_detail.html', {'exercise': exercise})
+
+    # 2. LẤY CÁC BÀI TẬP CÙNG NHÓM CƠ (Đây là đoạn quan trọng nhất)
+    # Lọc những bài có cùng muscle_group, nhưng phải loại trừ bài đang xem ra (exclude pk=pk)
+    related_exercises = Exercise.objects.filter(
+        muscle_group=exercise.muscle_group
+    ).exclude(pk=pk)[:4]  # Lấy tối đa 4 bài thôi cho đẹp giao diện
+
+    context = {
+        'exercise': exercise,
+        'related_exercises': related_exercises,  # PHẢI CÓ DÒNG NÀY thì HTML mới thấy dữ liệu
+    }
+    return render(request, 'exercises/exercise_detail.html', context)
 
 
 # ================= GIỎ HÀNG & THANH TOÁN =================
@@ -105,8 +137,8 @@ def add_to_cart(request, pk):
     messages.success(request, f"Đã thêm {product.name} vào giỏ!")
 
     if request.GET.get('buy_now'):
-        return redirect('checkout')
-    return redirect('cart')
+        return redirect('store:checkout') # Sửa: Thêm store:
+    return redirect('store:cart') # Sửa: Thêm store:
 
 
 @login_required(login_url='login')
@@ -119,7 +151,7 @@ def cart_view(request):
 def update_cart_item(request, item_id, action):
     item = get_object_or_404(CartItem, id=item_id)
     if item.cart.user != request.user:
-        return redirect('cart')
+        return redirect('store:cart') # Sửa: Thêm store: (và thêm return)
 
     if action == 'increase':
         item.quantity += 1
@@ -135,8 +167,8 @@ def update_cart_item(request, item_id, action):
 
     next_page = request.GET.get('next')
     if next_page == 'checkout':
-        return redirect('checkout')
-    return redirect('cart')
+        return redirect('store:checkout') # Sửa: Thêm store:
+    return redirect('store:cart') # Sửa: Thêm store:
 
 
 @login_required(login_url='login')
@@ -145,7 +177,7 @@ def checkout_view(request):
     cart, created = Cart.objects.get_or_create(user=request.user)
     if cart.items.count() == 0:
         messages.warning(request, "Giỏ hàng đang trống!")
-        return redirect('store')
+        return redirect('store:store') # Sửa: Thêm store:
 
     user_profile = getattr(request.user, 'profile', None)
     initial_data = {
@@ -184,105 +216,62 @@ def order_history(request):
     return render(request, 'store/order_history.html', {'orders': orders})
 
 
-# ================= QUẢN TRỊ (ADMIN / STAFF) =================
-
-@staff_member_required(login_url='login')
-def manage_orders(request):
-    """Quản lý đơn hàng + GỬI EMAIL CHO MỌI TRẠNG THÁI"""
-    if request.method == 'POST':
-        try:
-            order_id = request.POST.get('order_id')
-            new_status = request.POST.get('status')  # HTML gửi lên: CONFIRMED, SHIPPING...
-            cancel_reason = request.POST.get('cancel_reason')
-
-            order = Order.objects.get(id=order_id)
-
-            # Lưu lại trạng thái cũ để kiểm tra (tùy chọn, để tránh spam nếu admin bấm lưu 2 lần)
-            old_status = order.status
-
-            # Cập nhật thông tin
-            order.status = new_status
-            if cancel_reason:
-                order.cancel_reason = cancel_reason
-
-            # Nếu Hoàn thành -> Đánh dấu đã trả tiền
-            if new_status == 'COMPLETED':
-                order.is_paid = True
-
-            order.save()
-
-            # === LOGIC GỬI EMAIL THEO TỪNG TRẠNG THÁI ===
-            # Chỉ gửi nếu trạng thái thực sự thay đổi (tránh spam)
-            if old_status != new_status:
-                subject = ""
-                message = ""
-
-                # 1. ĐÃ XÁC NHẬN (CONFIRMED)
-                if new_status == 'CONFIRMED':
-                    subject = f"✅ Đơn hàng #{order.id} đã được xác nhận!"
-                    message = f"""Xin chào {order.full_name},
-
-Shop đã nhận được đơn hàng #{order.id} của bạn và đang tiến hành đóng gói.
-Chúng tôi sẽ bàn giao cho đơn vị vận chuyển sớm nhất.
-
-Cảm ơn bạn đã chờ đợi!"""
-
-                # 2. ĐANG GIAO HÀNG (SHIPPING)
-                elif new_status == 'SHIPPING':
-                    subject = f"🚚 Đơn hàng #{order.id} đang trên đường giao đến bạn"
-                    message = f"""Xin chào {order.full_name},
-
-Shipper đã lấy hàng đi giao rồi nhé!
-Bạn vui lòng để ý điện thoại để nhận hàng.
-
-Chúc bạn một ngày tốt lành!"""
-
-                # 3. HOÀN THÀNH (COMPLETED)
-                elif new_status == 'COMPLETED':
-                    subject = f"🎉 Giao thành công! Cảm ơn bạn đã mua hàng #{order.id}"
-                    message = f"""Xin chào {order.full_name},
-
-Hệ thống ghi nhận đơn hàng #{order.id} đã được giao thành công.
-Hy vọng bạn hài lòng với sản phẩm. Hẹn gặp lại bạn lần sau nhé!"""
-
-                # 4. ĐÃ HỦY (CANCELLED)
-                elif new_status == 'CANCELLED':
-                    subject = f"❌ Thông báo hủy đơn hàng #{order.id}"
-                    message = f"""Xin chào {order.full_name},
-
-Rất tiếc, đơn hàng #{order.id} của bạn đã bị hủy.
-Lý do hủy: {order.cancel_reason if order.cancel_reason else 'Không có lý do cụ thể'}
-
-Vui lòng liên hệ lại với Shop nếu cần hỗ trợ thêm nhé."""
-
-                # --- TIẾN HÀNH GỬI MAIL ---
-                if subject and order.email:
-                    try:
-                        EmailThread(subject, message, [order.email]).start()
-                        messages.success(request, f"Đã cập nhật trạng thái '{new_status}' và gửi mail thành công!")
-                    except Exception as e:
-                        messages.warning(request, f"Đã cập nhật nhưng lỗi gửi mail: {e}")
-                else:
-                    messages.success(request,
-                                     f"Đã cập nhật trạng thái (Không gửi mail do thiếu nội dung hoặc email khách).")
-            else:
-                messages.info(request, "Trạng thái không thay đổi, không gửi mail.")
-
-        except Order.DoesNotExist:
-            messages.error(request, "Không tìm thấy đơn hàng!")
-
-    orders = Order.objects.all().order_by('-created_at')
-    return render(request, 'store/manage_orders.html', {'orders': orders})
-
-
 @staff_member_required(login_url='login')
 def manage_products(request):
-    products = Product.objects.all().order_by('-id')
-    return render(request, 'store/manage_products.html', {'products': products})
+    # --- 1. CHỐT CHẶN PHÂN QUYỀN (An toàn cho Djongo) ---
+    user_groups = [g.name for g in request.user.groups.all()]
+    if not (request.user.is_superuser or 'Kho' in user_groups):
+        messages.error(request, "Bạn không có quyền quản lý Kho và Sản phẩm!")
+        return redirect('store:admin_dashboard')
+
+    # --- 2. XỬ LÝ LOGIC NHẬP HÀNG (POST) ---
+    if request.method == 'POST' and 'restock' in request.POST:
+        try:
+            product_id = request.POST.get('product_id')
+            add_quantity = int(request.POST.get('add_quantity', 0))
+
+            if add_quantity > 0:
+                product = get_object_or_404(Product, pk=product_id)
+                product.stock += add_quantity
+                product.save()
+                messages.success(request,
+                                 f"📦 Đã nhập thêm {add_quantity} sản phẩm cho '{product.name}'. Tồn kho hiện tại: {product.stock}")
+            else:
+                messages.error(request, "Số lượng nhập phải lớn hơn 0!")
+        except ValueError:
+            messages.error(request, "Vui lòng nhập một số hợp lệ!")
+        return redirect('store:manage_products')
+
+    # --- 3. XỬ LÝ HIỂN THỊ & TÌM KIẾM (GET) ---
+    search_query = request.GET.get('search', '')
+
+    # Lấy toàn bộ danh sách ra list (Né lỗi order_by/filter trực tiếp của Djongo trên MongoDB)
+    all_products = list(Product.objects.all())
+
+    # Sắp xếp mới nhất lên đầu bằng Python
+    products = sorted(all_products, key=lambda x: x.id, reverse=True)
+
+    # Nếu có từ khóa tìm kiếm, lọc bằng Python luôn cho "bất tử"
+    if search_query:
+        query = search_query.lower()
+        products = [
+            p for p in products
+            if query in p.name.lower() or
+               (p.category and query in p.get_category_display().lower())
+        ]
+
+    return render(request, 'store/manage_products.html', {
+        'products': products,
+        'search_query': search_query  # Trả lại để hiển thị trên ô input
+    })
 
 
 @staff_member_required(login_url='login')
 def edit_product(request, pk):
+    user_groups = [g.name for g in request.user.groups.all()]
+    if not (request.user.is_superuser or 'Kho' in user_groups):
+        messages.error(request, "Bạn không có quyền quản lý Kho và Sản phẩm!")
+        return redirect('store:admin_dashboard')
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES, instance=product)
@@ -293,7 +282,7 @@ def edit_product(request, pk):
                 for img in images:
                     ProductImage.objects.create(product=product, image=img)
             messages.success(request, f"Đã cập nhật '{product.name}' thành công!")
-            return redirect('manage_products')
+            return redirect('store:manage_products') # Sửa: Thêm store:
     else:
         form = ProductForm(instance=product)
     return render(request, 'store/edit_product.html', {'form': form, 'product': product})
@@ -301,6 +290,10 @@ def edit_product(request, pk):
 
 @staff_member_required(login_url='login')
 def add_product(request):
+    user_groups = [g.name for g in request.user.groups.all()]
+    if not (request.user.is_superuser or 'Kho' in user_groups):
+        messages.error(request, "Bạn không có quyền quản lý Kho và Sản phẩm!")
+        return redirect('store:admin_dashboard')
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
@@ -310,7 +303,7 @@ def add_product(request):
                 for img in images:
                     ProductImage.objects.create(product=product, image=img)
             messages.success(request, "Thêm sản phẩm thành công!")
-            return redirect('manage_products')
+            return redirect('store:manage_products') # Sửa: Thêm store:
     else:
         form = ProductForm()
     return render(request, 'store/add_product.html', {'form': form})
@@ -318,9 +311,13 @@ def add_product(request):
 
 @staff_member_required(login_url='login')
 def delete_product(request, pk):
+    user_groups = [g.name for g in request.user.groups.all()]
+    if not (request.user.is_superuser or 'Kho' in user_groups):
+        messages.error(request, "Bạn không có quyền quản lý Kho và Sản phẩm!")
+        return redirect('store:admin_dashboard')
     get_object_or_404(Product, pk=pk).delete()
     messages.success(request, "Đã xóa sản phẩm!")
-    return redirect('manage_products')
+    return redirect('store:manage_products') # Sửa: Thêm store:
 
 
 @staff_member_required(login_url='login')
@@ -329,25 +326,49 @@ def delete_image(request, img_id):
     p_id = img.product.id
     img.delete()
     messages.success(request, "Đã xóa ảnh phụ!")
-    return redirect('edit_product', pk=p_id)
+    return redirect('store:edit_product', pk=p_id) # Sửa: Thêm store:
 
 
 # ================= QUẢN LÝ BÀI TẬP (ADMIN) =================
 
 @staff_member_required(login_url='login')
 def manage_exercises(request):
-    exercises = Exercise.objects.all().order_by('-created_at')
-    return render(request, 'exercises/manage_exercises.html', {'exercises': exercises})
+    # CHỐT CHẶN PHÂN QUYỀN (Dùng Python an toàn cho Djongo)
+    user_groups = [g.name for g in request.user.groups.all()]
+    if not (request.user.is_superuser or 'PT' in user_groups):
+        messages.error(request, "Bạn không có quyền chỉnh sửa Bài tập!")
+        return redirect('store:admin_dashboard')
+
+    # Lấy từ khóa từ ô tìm kiếm
+    search_query = request.GET.get('search', '')
+
+    # Lấy toàn bộ danh sách bài tập ra list (Fix lỗi Djongo)
+    exercises_list = list(Exercise.objects.all().order_by('-id'))
+
+    # Nếu có từ khóa, dùng Python để lọc (Tránh lỗi filter của MongoDB)
+    if search_query:
+        search_query = search_query.lower()
+        exercises_list = [
+            e for e in exercises_list
+            if search_query in e.name.lower() or
+               search_query in e.get_muscle_group_display().lower()
+        ]
+
+    return render(request, 'exercises/manage_exercises.html', {'exercises': exercises_list})
 
 
 @staff_member_required(login_url='login')
 def add_exercise(request):
+    user_groups = [g.name for g in request.user.groups.all()]
+    if not (request.user.is_superuser or 'PT' in user_groups):
+        messages.error(request, "Bạn không có quyền chỉnh sửa Bài tập!")
+        return redirect('store:admin_dashboard')
     if request.method == 'POST':
         form = ExerciseForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             messages.success(request, 'Đã thêm bài tập thành công!')
-            return redirect('manage_exercises')
+            return redirect('store:manage_exercises') # Sửa: Thêm store:
     else:
         form = ExerciseForm()
     return render(request, 'exercises/add_exercise.html', {'form': form})
@@ -355,17 +376,34 @@ def add_exercise(request):
 
 @staff_member_required(login_url='login')
 def delete_exercise(request, pk):
+    user_groups = [g.name for g in request.user.groups.all()]
+    if not (request.user.is_superuser or 'PT' in user_groups):
+        messages.error(request, "Bạn không có quyền chỉnh sửa Bài tập!")
+        return redirect('store:admin_dashboard')
     exercise = get_object_or_404(Exercise, pk=pk)
     exercise.delete()
     messages.success(request, 'Đã xóa bài tập!')
-    return redirect('manage_exercises')
+    return redirect('store:manage_exercises') # Sửa: Thêm store:
 
 
 @staff_member_required(login_url='login')
 def manage_orders(request):
-    """Quản lý đơn hàng + Gửi mail + Dữ liệu Biểu đồ đường theo tháng"""
+    # --- FIX LỖI DJONGO M2M: Dùng Python để kiểm tra quyền thay vì .exists() ---
+    is_kho = False
+    try:
+        # Lấy tất cả tên nhóm của user hiện tại
+        user_groups = [g.name for g in request.user.groups.all()]
+        if 'Kho' in user_groups:
+            is_kho = True
+    except Exception:
+        pass
 
-    # --- PHẦN 1: XỬ LÝ CẬP NHẬT TRẠNG THÁI (Giữ nguyên logic của bạn) ---
+    # CHỐT CHẶN BẢO MẬT
+    if not (request.user.is_superuser or is_kho):
+        messages.error(request, "Bạn không có quyền quản lý Kho và Đơn hàng!")
+        return redirect('store:admin_dashboard')
+
+    # --- PHẦN 1: XỬ LÝ CẬP NHẬT TRẠNG THÁI ---
     if request.method == 'POST':
         try:
             order_id = request.POST.get('order_id')
@@ -373,51 +411,280 @@ def manage_orders(request):
             cancel_reason = request.POST.get('cancel_reason')
             order = Order.objects.get(id=order_id)
             old_status = order.status
+
             order.status = new_status
             if cancel_reason: order.cancel_reason = cancel_reason
             if new_status == 'COMPLETED': order.is_paid = True
             order.save()
 
             if old_status != new_status:
-                # ... (Phần logic gửi mail của bạn giữ nguyên ở đây) ...
-                subject = f"Thông báo đơn hàng #{order.id}"
-                message = f"Trạng thái đơn hàng của bạn đã chuyển sang: {new_status}"
-                if order.email:
-                    EmailThread(subject, message, [order.email]).start()
+                # Logic tự động trừ tồn kho
+                if new_status == 'SHIPPING' and old_status != 'SHIPPING':
+                    for item in order.items.all():
+                        product = item.product
+                        product.stock -= item.quantity
+                        if product.stock < 0:
+                            product.stock = 0
+                        product.save()
 
             messages.success(request, f"Đã cập nhật đơn hàng #{order_id}!")
         except Order.DoesNotExist:
             messages.error(request, "Không tìm thấy đơn hàng!")
 
-    # --- PHẦN 2: CHUẨN BỊ DỮ LIỆU THỐNG KÊ & BIỂU ĐỒ ---
-    orders = Order.objects.all().order_by('-created_at')
-    completed_orders = Order.objects.filter(status='COMPLETED')
+    # --- PHẦN 2: CHUẨN BỊ DỮ LIỆU (ĐÃ FIX LỖI DJONGO BẰNG PYTHON) ---
+    orders = []
+    try:
+        # Lấy tất cả Đơn hàng dạng list
+        all_orders = list(Order.objects.all())
+        # Dùng Python để sắp xếp
+        orders = sorted(all_orders, key=lambda x: x.created_at, reverse=True)
+    except Exception as e:
+        print(f"Lỗi Djongo Order: {e}")
 
-    # 2.1 Con số tổng quát cho Dashboard
-    total_revenue = sum(order.total_amount for order in completed_orders if order.total_amount)
-    total_completed_count = completed_orders.count()
-    pending_orders_count = Order.objects.filter(status='PENDING').count()
+    # Dùng Python lọc trạng thái đơn
+    completed_orders = [o for o in orders if o.status == 'COMPLETED']
 
-    # 2.2 Chuẩn bị dữ liệu chi tiết cho Biểu đồ (Gửi sang JS xử lý)
+    total_completed_count = len(completed_orders)
+    pending_orders_count = len([o for o in orders if o.status == 'PENDING'])
+
+    # 2.1 Tính TỔNG LỢI NHUẬN
+    total_profit = 0
+    for order in completed_orders:
+        for item in order.items.all():
+            p_price = item.product.price or 0
+            p_import = item.product.import_price or 0
+            total_profit += (p_price - p_import) * item.quantity
+
+    # 2.2 Chuẩn bị dữ liệu LỢI NHUẬN chi tiết cho Biểu đồ
     chart_data = []
     for order in completed_orders:
-        if order.created_at and order.total_amount:
+        order_profit = 0
+        for item in order.items.all():
+            p_price = item.product.price or 0
+            p_import = item.product.import_price or 0
+            order_profit += (p_price - p_import) * item.quantity
+
+        if order.created_at:
             chart_data.append({
-                'date': order.created_at.strftime('%Y-%m-%d'),  # Để sắp xếp ngày
-                'month': order.created_at.strftime('%m/%Y'),  # Để JS lọc theo tháng
-                'amount': float(order.total_amount)
+                'date': order.created_at.strftime('%Y-%m-%d'),
+                'month': order.created_at.strftime('%m/%Y'),
+                'amount': float(order_profit)
             })
 
-    # 2.3 Lấy danh sách các "Tháng/Năm" duy nhất để làm Dropdown chọn tháng
+    # 2.3 Lấy danh sách các "Tháng/Năm" duy nhất
     unique_months = sorted(list(set(item['month'] for item in chart_data)),
                            key=lambda x: datetime.strptime(x, '%m/%Y'), reverse=True)
+
+    current_month_year = timezone.now().strftime('%m/%Y')
+    if current_month_year not in unique_months:
+        unique_months.insert(0, current_month_year)
+
+    selected_month = request.GET.get('month', current_month_year)
 
     # --- PHẦN 3: TRẢ DỮ LIỆU ---
     return render(request, 'store/manage_orders.html', {
         'orders': orders,
-        'total_revenue': total_revenue,
+        'total_revenue': total_profit,
         'total_completed_count': total_completed_count,
         'pending_orders_count': pending_orders_count,
         'unique_months': unique_months,
-        'chart_data_json': json.dumps(chart_data),  # Dữ liệu thô gửi cho JavaScript vẽ biểu đồ
+        'selected_month': selected_month,
+        'chart_data_json': json.dumps(chart_data),
     })
+@staff_member_required(login_url='login')
+def edit_exercise(request, pk):
+    user_groups = [g.name for g in request.user.groups.all()]
+    if not (request.user.is_superuser or 'PT' in user_groups):
+        messages.error(request, "Bạn không có quyền chỉnh sửa Bài tập!")
+        return redirect('store:admin_dashboard')
+    exercise = get_object_or_404(Exercise, pk=pk)
+    if request.method == 'POST':
+        form = ExerciseForm(request.POST, request.FILES, instance=exercise)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Đã cập nhật bài tập '{exercise.name}'!")
+            return redirect('store:manage_exercises')
+    else:
+        form = ExerciseForm(instance=exercise)
+    return render(request, 'exercises/edit_exercise.html', {'form': form, 'exercise': exercise})
+
+
+@staff_member_required(login_url='login')
+def manage_customers(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Lỗi phân quyền: Chỉ Quản trị viên (Admin) mới được xem trang này!")
+        return redirect('store:admin_dashboard')
+
+    # --- XỬ LÝ KHI BẤM NÚT LƯU QUYỀN ---
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        action = request.POST.get('action')
+
+        try:
+            target_user = User.objects.get(id=user_id)
+            if target_user == request.user:
+                messages.error(request, "Bạn không thể tự thay đổi quyền của chính mình!")
+            else:
+                if action == 'update_role':
+                    role = request.POST.get('role')
+                    target_user.groups.clear()  # Xóa hết phòng ban cũ
+
+                    if role == 'khach_hang':
+                        target_user.is_staff = False
+                        messages.success(request,
+                                         f"Đã thu hồi quyền của {target_user.username}, chuyển thành Khách hàng!")
+                    else:
+                        target_user.is_staff = True
+                        # Tự động tạo Group nếu chưa có trong DB
+                        group, _ = Group.objects.get_or_create(name=role)
+                        target_user.groups.add(group)
+                        role_name = "Quản lý Kho" if role == 'Kho' else "Quản lý Bài tập"
+                        messages.success(request, f"Đã bổ nhiệm {target_user.username} làm {role_name}!")
+
+                elif action == 'toggle_active':
+                    target_user.is_active = not target_user.is_active
+                    status = "Mở khóa" if target_user.is_active else "Khóa"
+                    messages.success(request, f"Đã {status} tài khoản {target_user.username}!")
+
+                target_user.save()
+        except User.DoesNotExist:
+            messages.error(request, "Không tìm thấy người dùng!")
+
+        return redirect('store:manage_customers')
+
+    # --- CHUẨN BỊ DỮ LIỆU HIỂN THỊ ---
+    customers = []
+    try:
+        all_users = list(User.objects.all())
+        for u in all_users:
+            if not u.is_superuser:
+                # Gắn nhãn để hiển thị HTML cho đẹp
+                if u.is_staff:
+                    group = u.groups.first()
+                    if group and group.name == 'Kho':
+                        u.role_display = "Quản lý Kho"
+                        u.role_code = "Kho"
+                    elif group and group.name == 'PT':
+                        u.role_display = "Quản lý Bài tập"
+                        u.role_code = "PT"
+                    else:
+                        u.role_display = "Nhân viên (Chưa phân ban)"
+                        u.role_code = ""
+                else:
+                    u.role_display = "Khách hàng"
+                    u.role_code = "khach_hang"
+                customers.append(u)
+
+        customers.sort(key=lambda x: x.date_joined, reverse=True)
+    except Exception as e:
+        print(f"Lỗi Djongo: {e}")
+
+    return render(request, 'store/manage_customers.html', {'customers': customers})
+
+
+@staff_member_required(login_url='login')
+def admin_dashboard(request):
+    from django.contrib.auth.models import User
+
+    # 1. Số lượng Sản phẩm (Cái này MongoDB đếm được bình thường)
+    total_products = Product.objects.count()
+
+    # 2. FIX LỖI DJONGO: Đếm Khách hàng bằng Python
+    total_customers = 0
+    try:
+        all_users = list(User.objects.all())
+        total_customers = len([u for u in all_users if not u.is_staff])
+    except Exception as e:
+        print(f"Lỗi Djongo đếm User: {e}")
+
+    # 3. FIX LỖI DJONGO: Đếm và Lọc Đơn hàng bằng Python
+    pending_orders = 0
+    completed_orders = []
+    try:
+        all_orders = list(Order.objects.all())
+        pending_orders = len([o for o in all_orders if o.status == 'PENDING'])
+        completed_orders = [o for o in all_orders if o.status == 'COMPLETED']
+    except Exception as e:
+        print(f"Lỗi Djongo lọc Order: {e}")
+
+    # 4. Tính tổng lợi nhuận
+    total_revenue = 0
+    for order in completed_orders:
+        for item in order.items.all():
+            p_price = item.product.price or 0
+            p_import = item.product.import_price or 0
+            total_revenue += (p_price - p_import) * item.quantity
+
+    return render(request, 'core/dashboard.html', {
+        'total_products': total_products,
+        'pending_orders': pending_orders,
+        'total_customers': total_customers,
+        'total_revenue': total_revenue,
+    })
+
+
+from django.http import JsonResponse
+
+def exercise_autocomplete(request):
+    query = request.GET.get('term', '')  # 'term' là từ khóa từ ô Search gửi qua
+    results = []
+
+    if query:
+        try:
+            # 1. Tìm trong Bài tập (Exercise) - Lấy 5 cái
+            ex_qs = Exercise.objects.filter(name__icontains=query)[:5]
+
+            # 2. Tìm trong Sản phẩm (Product) - Lấy 5 cái
+            pr_qs = Product.objects.filter(name__icontains=query)[:5]
+
+            # 3. Gói dữ liệu Bài tập (Gắn thêm link trang chi tiết và icon)
+            for e in ex_qs:
+                results.append({
+                    'label': f"💪 {e.name}",        # Hiện ra có icon bắp tay cho ngầu
+                    'value': e.name,               # Chữ điền vào ô tìm kiếm
+                    'url': f"/store/exercise-detail/{e.id}/"    # Link bay thẳng tới trang chi tiết bài tập
+                })
+
+            # 4. Gói dữ liệu Sản phẩm (Gắn thêm link mua hàng và icon)
+            for p in pr_qs:
+                results.append({
+                    'label': f"📦 {p.name}",        # Hiện ra có icon hộp hàng
+                    'value': p.name,               # Chữ điền vào ô tìm kiếm
+                    'url': f"/store/product/{p.id}/"     # Link bay thẳng tới trang chi tiết sản phẩm
+                })
+
+        except Exception as e:
+            print(f"Lỗi Autocomplete: {e}")
+
+    # Nhớ để safe=False vì mình đang trả về một List các Dictionary
+    return JsonResponse(results, safe=False)
+
+def api_get_all_products(request):
+    """Cổng API cung cấp dữ liệu Sản phẩm cho AI Recommendation"""
+    try:
+        products = Product.objects.all()
+        data = []
+        for p in products:
+            # Tạo đường dẫn (link) tới trang chi tiết sản phẩm
+            # Chú ý: Đổi 'product_detail' thành tên name chuẩn trong urls.py của trang chi tiết
+            product_url = f"/product/{p.id}/"
+
+            data.append({
+                'id': p.id,
+                'name': p.name,
+                'price': float(p.price) if p.price else 0,
+                'category': p.get_category_display() if p.category else 'Khác',
+                'stock': p.stock,
+                'link': product_url,
+                'image_url': p.image.url if p.image else ''
+            })
+
+        # Trả về chuỗi JSON
+        return JsonResponse({
+            'status': 'success',
+            'total': len(data),
+            'data': data
+        }, safe=False)
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})

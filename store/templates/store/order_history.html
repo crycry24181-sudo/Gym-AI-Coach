@@ -2,49 +2,53 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="mb-4 fw-bold text-center"><i class="fas fa-history"></i> LỊCH SỬ ĐƠN HÀNG</h2>
+<div class="container py-5" style="margin-top: 80px; min-height: 80vh;">
+    <h2 class="mb-4 fw-bold text-center text-uppercase text-dark">
+        <i class="fas fa-history text-primary me-2"></i> LỊCH SỬ ĐƠN HÀNG
+    </h2>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
+    <div class="card shadow border-0 rounded-4 overflow-hidden">
+        <div class="card-body p-0">
             {% if orders %}
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-dark">
-                            <tr>
-                                <th>Mã đơn</th>
-                                <th>Ngày đặt</th>
-                                <th>Tổng tiền</th>
-                                <th>Trạng thái</th>
-                                <th>Ghi chú / Lý do</th>
+                            <tr class="text-center">
+                                <th class="py-3">Mã đơn</th>
+                                <th class="py-3">Ngày đặt</th>
+                                <th class="py-3">Tổng tiền</th>
+                                <th class="py-3">Trạng thái</th>
+                                <th class="py-3">Ghi chú / Lý do</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for order in orders %}
-                            <tr>
-                                <td><strong>#{{ order.id }}</strong></td>
-                                <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
-                                <td class="text-danger fw-bold">{{ order.total_amount }} đ</td>
+                            <tr class="text-center">
+                                <td><span class="badge bg-light text-dark border fw-bold px-3 py-2">#{{ order.id }}</span></td>
+                                <td class="text-muted">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                <td class="text-danger fw-bold fs-5">{{ order.total_amount|floatformat:0 }} đ</td>
 
                                 <td>
                                     {% if order.status == 'PENDING' %}
-                                        <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+                                        <span class="badge rounded-pill bg-warning text-dark px-3 py-2"><i class="fas fa-clock me-1"></i> Chờ xác nhận</span>
                                     {% elif order.status == 'CONFIRMED' %}
-                                        <span class="badge bg-primary">Đã xác nhận</span>
+                                        <span class="badge rounded-pill bg-primary px-3 py-2"><i class="fas fa-check me-1"></i> Đã xác nhận</span>
                                     {% elif order.status == 'SHIPPING' %}
-                                        <span class="badge bg-info text-dark">Đang giao</span>
+                                        <span class="badge rounded-pill bg-info text-dark px-3 py-2"><i class="fas fa-truck me-1"></i> Đang giao</span>
                                     {% elif order.status == 'COMPLETED' %}
-                                        <span class="badge bg-success">Hoàn thành</span>
+                                        <span class="badge rounded-pill bg-success px-3 py-2"><i class="fas fa-check-double me-1"></i> Hoàn thành</span>
                                     {% elif order.status == 'CANCELLED' %}
-                                        <span class="badge bg-danger">Đã bị từ chối</span>
+                                        <span class="badge rounded-pill bg-danger px-3 py-2"><i class="fas fa-times me-1"></i> Đã bị từ chối</span>
                                     {% endif %}
                                 </td>
 
-                                <td>
+                                <td class="text-start ps-4">
                                     {% if order.status == 'CANCELLED' and order.cancel_reason %}
-                                        <span class="text-danger small"><i class="fas fa-exclamation-circle"></i> {{ order.cancel_reason }}</span>
+                                        <div class="alert alert-danger mb-0 py-1 px-2 d-inline-block small">
+                                            <i class="fas fa-exclamation-circle"></i> {{ order.cancel_reason }}
+                                        </div>
                                     {% else %}
-                                        <span class="text-muted small">-</span>
+                                        <span class="text-muted small italic">- Không có ghi chú -</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -53,12 +57,23 @@
                     </table>
                 </div>
             {% else %}
-                <div class="text-center py-4">
-                    <p>Bạn chưa có đơn hàng nào.</p>
-                    <a href="{% url 'store' %}" class="btn btn-primary">Đi mua sắm ngay</a>
+                <div class="text-center py-5">
+                    <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Bạn chưa có đơn hàng nào trong lịch sử.</h4>
+                    <p class="mb-4">Hãy bắt đầu hành trình tập luyện bằng cách chọn những sản phẩm tốt nhất!</p>
+
+                    <a href="{% url 'store:store' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold text-uppercase">
+                        <i class="fas fa-shopping-bag me-2"></i> Đi mua sắm ngay
+                    </a>
                 </div>
             {% endif %}
         </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="{% url 'profile' %}" class="btn btn-link text-decoration-none text-muted">
+            <i class="fas fa-user-circle me-1"></i> Quay lại Hồ sơ của tôi
+        </a>
     </div>
 </div>
 {% endblock %}

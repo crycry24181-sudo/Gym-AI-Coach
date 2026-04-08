@@ -2,60 +2,66 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="mb-4 fw-bold text-center"><i class="fas fa-shopping-cart"></i> GIỎ HÀNG CỦA BẠN</h2>
+<div class="container py-5" style="margin-top: 80px; min-height: 80vh;">
+    <h2 class="mb-4 fw-bold text-center text-uppercase text-dark">
+        <i class="fas fa-shopping-cart text-warning me-2"></i> GIỎ HÀNG CỦA BẠN
+    </h2>
 
     {% if cart.items.count > 0 %}
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
+        <div class="card shadow border-0 rounded-4 overflow-hidden">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table align-middle text-center">
-                        <thead class="table-light">
+                    <table class="table align-middle text-center table-hover mb-0">
+                        <thead class="table-dark">
                             <tr>
-                                <th style="width: 40%">Sản phẩm</th>
-                                <th>Giá</th>
-                                <th>Số lượng</th>
-                                <th>Thành tiền</th>
-                                <th>Xóa</th>
+                                <th style="width: 40%" class="py-3 ps-4 text-start">Sản phẩm</th>
+                                <th class="py-3">Giá</th>
+                                <th class="py-3">Số lượng</th>
+                                <th class="py-3">Thành tiền</th>
+                                <th class="py-3">Xóa</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in cart.items.all %}
                             <tr>
-                                <td class="text-start">
+                                <td class="text-start ps-4 py-3">
                                     <div class="d-flex align-items-center">
                                         {% if item.product.image %}
-                                            <img src="{{ item.product.image.url }}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: contain; border: 1px solid #eee;">
+                                            <img src="{{ item.product.image.url }}" class="rounded shadow-sm me-3 bg-white" style="width: 70px; height: 70px; object-fit: contain; border: 1px solid #eee; padding: 5px;">
+                                        {% else %}
+                                            <div class="rounded shadow-sm me-3 bg-light d-flex align-items-center justify-content-center text-muted" style="width: 70px; height: 70px; border: 1px solid #eee;">
+                                                <i class="fas fa-box"></i>
+                                            </div>
                                         {% endif %}
                                         <div>
-                                            <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
-                                            <small class="text-muted">{{ item.product.get_category_display }}</small>
+                                            <h6 class="mb-1 fw-bold text-dark">{{ item.product.name }}</h6>
+                                            <span class="badge bg-info text-dark">{{ item.product.get_category_display }}</span>
                                         </div>
                                     </div>
                                 </td>
 
-                                <td>{{ item.product.price }} đ</td>
+                                <td class="fw-semibold">{{ item.product.price }} đ</td>
 
                                 <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{% url 'update_cart_item' item.id 'decrease' %}" class="btn btn-outline-dark btn-sm">
+                                    <div class="btn-group shadow-sm" role="group">
+                                        <a href="{% url 'store:update_cart_item' item.id 'decrease' %}" class="btn btn-outline-secondary btn-sm px-3">
                                             <i class="fas fa-minus"></i>
                                         </a>
 
-                                        <span class="btn btn-light btn-sm disabled text-dark fw-bold" style="width: 40px; border: 1px solid #ced4da;">
+                                        <span class="btn btn-light btn-sm disabled text-dark fw-bold px-3" style="border-top: 1px solid #6c757d; border-bottom: 1px solid #6c757d;">
                                             {{ item.quantity }}
                                         </span>
 
-                                        <a href="{% url 'update_cart_item' item.id 'increase' %}" class="btn btn-outline-dark btn-sm">
+                                        <a href="{% url 'store:update_cart_item' item.id 'increase' %}" class="btn btn-outline-secondary btn-sm px-3">
                                             <i class="fas fa-plus"></i>
                                         </a>
                                     </div>
                                 </td>
 
-                                <td class="fw-bold text-danger">{{ item.total_price }} đ</td>
+                                <td class="fw-bold text-danger fs-5">{{ item.total_price }} đ</td>
 
                                 <td>
-                                    <a href="{% url 'update_cart_item' item.id 'delete' %}" class="text-danger" onclick="return confirm('Bạn chắc chắn muốn xóa món này?');">
+                                    <a href="{% url 'store:update_cart_item' item.id 'delete' %}" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Bạn chắc chắn muốn xóa món này khỏi giỏ?');">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                 </td>
@@ -66,16 +72,16 @@
                 </div>
             </div>
 
-            <div class="card-footer bg-white py-3">
+            <div class="card-footer bg-light py-4 px-4 border-top">
                 <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <a href="{% url 'store' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left"></i> Tiếp tục mua sắm
+                    <div class="col-md-6 mb-3 mb-md-0 text-center text-md-start">
+                        <a href="{% url 'store:store' %}" class="btn btn-outline-secondary fw-bold rounded-pill px-4 shadow-sm">
+                            <i class="fas fa-arrow-left me-2"></i> Tiếp tục mua sắm
                         </a>
                     </div>
-                    <div class="col-md-6 text-end">
-                        <h4 class="fw-bold mb-3">Tổng cộng: <span class="text-danger">{{ cart.total_price }} đ</span></h4>
-                        <a href="{% url 'checkout' %}" class="btn btn-success btn-lg px-5 shadow">
+                    <div class="col-md-6 text-center text-md-end">
+                        <h4 class="fw-bold mb-3 text-dark">Tổng cộng: <span class="text-danger ms-2">{{ cart.total_price }} đ</span></h4>
+                        <a href="{% url 'store:checkout' %}" class="btn btn-success btn-lg px-5 shadow rounded-pill text-uppercase fw-bold">
                             Thanh toán ngay <i class="fas fa-check-circle ms-2"></i>
                         </a>
                     </div>
@@ -83,11 +89,13 @@
             </div>
         </div>
     {% else %}
-        <div class="text-center py-5 bg-white rounded shadow-sm">
-            <i class="fas fa-shopping-basket fa-4x text-muted mb-3"></i>
-            <h3>Giỏ hàng của bạn đang trống!</h3>
-            <p class="text-muted">Hãy thêm vài món đồ bổ dưỡng vào nhé.</p>
-            <a href="{% url 'store' %}" class="btn btn-primary mt-3">Đi tới Cửa hàng</a>
+        <div class="text-center py-5 my-5 bg-white rounded-4 shadow-sm border-0">
+            <i class="fas fa-shopping-basket fa-5x text-warning mb-4 opacity-75"></i>
+            <h3 class="fw-bold text-dark">Giỏ hàng của bạn đang trống!</h3>
+            <p class="text-muted fs-5 mb-4">Hãy thêm vài món đồ bổ dưỡng để có sức tập luyện nhé.</p>
+            <a href="{% url 'store:store' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold text-uppercase">
+                <i class="fas fa-store me-2"></i> Đi tới Cửa hàng
+            </a>
         </div>
     {% endif %}
 </div>

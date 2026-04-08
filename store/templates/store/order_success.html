@@ -1,22 +1,68 @@
 {% extends 'core/base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container py-5 text-center">
+<div class="container py-5 text-center" style="margin-top: 100px; min-height: 80vh;">
     <div class="mb-4 text-success">
-        <i class="fas fa-check-circle fa-5x"></i>
-    </div>
-    <h1 class="fw-bold">ĐẶT HÀNG THÀNH CÔNG!</h1>
-    <p class="lead">Mã đơn hàng của bạn là: <strong>#{{ order.id }}</strong></p>
-    <p>Chúng tôi đã gửi thông tin xác nhận về email: <b>{{ order.email }}</b></p>
-
-    <div class="card mx-auto mt-4 p-3" style="max-width: 500px;">
-        <h5>Thông tin người nhận</h5>
-        <p><strong>{{ order.full_name }}</strong> - {{ order.phone }}</p>
-        <p>{{ order.address }}</p>
-        <hr>
-        <h4 class="text-danger">Tổng thanh toán: {{ order.total_amount }} đ</h4>
-        <p class="badge bg-warning text-dark">{{ order.get_payment_method_display }}</p>
+        <i class="fas fa-check-circle fa-6x"></i>
     </div>
 
-    <a href="{% url 'store' %}" class="btn btn-primary mt-4">Tiếp tục mua sắm</a>
+    <h1 class="fw-bold text-uppercase text-dark mb-2">Đặt hàng thành công!</h1>
+    <p class="lead text-muted">Mã đơn hàng: <strong class="text-primary">#{{ order.id }}</strong></p>
+
+    <div class="card mx-auto mt-4 border-0 shadow-lg" style="max-width: 600px; border-radius: 20px; overflow: hidden;">
+
+        {% if order.payment_method == 'BANK' %}
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-university me-2"></i> THÔNG TIN CHUYỂN KHOẢN</h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted small mb-3">Quét mã QR dưới đây để thanh toán nhanh chóng và chính xác.</p>
+
+                <div class="bg-white p-3 d-inline-block rounded-3 mb-3 border shadow-sm">
+                    <img src="https://img.vietqr.io/image/MB-6595678910-compact2.png?amount={{ order.total_amount|floatformat:0 }}&addInfo=DH%20{{ order.id }}&accountName=HOANG%20QUOC%20CUONG"
+                         alt="Mã QR Thanh Toán MB Bank" class="img-fluid" style="max-width: 280px;">
+                </div>
+
+                <div class="text-start bg-light p-3 rounded-3 mb-3 border-start border-primary border-4">
+                    <p class="mb-1">🏦 <strong>Ngân hàng:</strong> MB Bank (MB)</p>
+                    <p class="mb-1">👤 <strong>Chủ TK:</strong> HOANG QUOC CUONG</p>
+                    <p class="mb-1">💳 <strong>Số TK:</strong> 6595678910</p>
+                    <p class="mb-1 text-danger">💰 <strong>Số tiền:</strong> {{ order.total_amount|floatformat:0 }} đ</p>
+                    <p class="mb-0 text-primary">📝 <strong>Nội dung:</strong> DH {{ order.id }}</p>
+                </div>
+
+                <div class="alert alert-warning py-2 mb-0 small">
+                    <i class="fas fa-info-circle"></i> Đơn hàng sẽ được xác nhận ngay sau khi nhận được tiền.
+                </div>
+            </div>
+        {% else %}
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-truck me-2"></i> THANH TOÁN KHI NHẬN HÀNG</h5>
+            </div>
+            <div class="card-body p-4 text-center">
+                <i class="fas fa-hand-holding-usd fa-4x text-muted mb-3"></i>
+                <h4 class="fw-bold">Số tiền cần trả: <span class="text-danger">{{ order.total_amount|floatformat:0 }} đ</span></h4>
+                <p class="text-muted">Bạn vui lòng chuẩn bị sẵn tiền mặt để thanh toán cho shipper nhé!</p>
+            </div>
+        {% endif %}
+
+        <div class="card-footer bg-white border-top p-4 text-start">
+            <h6 class="fw-bold mb-3"><i class="fas fa-map-marker-alt text-success me-2"></i> Địa chỉ nhận hàng:</h6>
+            <div class="p-2 border rounded bg-white shadow-sm">
+                <p class="mb-1 text-dark"><strong>{{ order.full_name }}</strong> | {{ order.phone }}</p>
+                <p class="mb-0 text-muted small">{{ order.address }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center gap-3 mt-5">
+        <a href="{% url 'store:store' %}" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow">
+            <i class="fas fa-shopping-bag me-2"></i> Tiếp tục mua sắm
+        </a>
+        <a href="{% url 'store:order_history' %}" class="btn btn-outline-dark btn-lg rounded-pill px-4 shadow-sm">
+            Lịch sử đơn hàng
+        </a>
+    </div>
 </div>
 {% endblock %}

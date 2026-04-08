@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -9,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
     <style>
         body {
             background-color: #f8f9fa;
@@ -17,128 +18,239 @@
             flex-direction: column;
             min-height: 100vh;
         }
-        /* Style cho Navbar */
-        .navbar-brand {
-            font-weight: 900;
-            letter-spacing: 1px;
+
+        /* ================= HEADER ĐỎ GỌN GÀNG ================= */
+        .bg-brand-red { background-color: #d3232a; }
+        .text-brand-red { color: #d3232a; }
+
+        .top-bar { font-size: 0.75rem; background: #b01a20; color: white; padding: 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Search Box */
+        .search-box { position: relative; width: 100%; max-width: 450px; }
+        .search-box input { border-radius: 4px; padding: 8px 40px 8px 15px; border: none; width: 100%; font-size: 0.85rem; }
+        .search-box input:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.3); }
+        .search-box button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #d3232a; font-size: 1rem; }
+
+        /* CUSTOME LẠI GIAO DIỆN BẢNG GỢI Ý AUTOCOMPLETE CHO SANG CHẢNH */
+        .ui-autocomplete {
+            background: white !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 8px 0 !important;
+            z-index: 2000 !important; /* Đảm bảo luôn nằm trên cùng */
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .nav-link {
-            font-weight: 500;
-            color: rgba(255,255,255,0.8) !important;
-            transition: 0.3s;
+        .ui-menu-item-wrapper {
+            padding: 10px 20px !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            color: #334155 !important;
+            transition: background 0.2s;
         }
-        .nav-link:hover {
-            color: #ffc107 !important; /* Màu vàng khi di chuột vào */
+        /* Hiệu ứng khi di chuột vào dòng gợi ý */
+        .ui-state-active, .ui-widget-content .ui-state-active {
+            background: #f1f5f9 !important;
+            border: none !important;
+            color: #d3232a !important;
+            margin: 0 !important;
         }
-        .auth-buttons a {
-            margin-left: 10px;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        /* Footer dính đáy */
-        footer {
-            margin-top: auto;
-        }
+
+        /* Menu trắng */
+        .main-nav { background: white; border-bottom: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .main-nav .nav-link { color: #333; font-weight: 700; font-size: 0.85rem; padding: 10px 20px !important; text-transform: uppercase; transition: 0.2s; letter-spacing: 0.5px; }
+        .main-nav .nav-link:hover { color: #d3232a; background-color: #f8f9fa; }
+        .header-btn { border-radius: 6px; padding: 6px 14px; font-size: 0.9rem; font-weight: 600; transition: 0.2s; }
+        .header-btn:hover { transform: translateY(-2px); }
+
+        /* ================= FOOTER CHUYÊN NGHIỆP ================= */
+        .footer-title { color: #ffc107; font-weight: 700; text-transform: uppercase; font-size: 1rem; margin-bottom: 25px; letter-spacing: 1px; }
+        .footer-link { color: #adb5bd; text-decoration: none; transition: all 0.3s; font-size: 0.9rem; display: block; margin-bottom: 12px; }
+        .footer-link:hover { color: #ffc107; padding-left: 8px; }
+        .social-icon { width: 38px; height: 38px; background: rgba(255,255,255,0.05); display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: white; transition: 0.3s; margin-right: 12px; text-decoration: none; border: 1px solid rgba(255,255,255,0.1); }
+        .social-icon.face:hover { background: #3b5998; border-color: #3b5998; transform: translateY(-5px); }
+        .social-icon.yout:hover { background: #ff0000; border-color: #ff0000; transform: translateY(-5px); }
+        .social-icon.tik:hover { background: #000000; border-color: #444; transform: translateY(-5px); }
+        .map-wrapper { width: 100%; height: 350px; background-color: #222; position: relative; overflow: hidden; border-top: 1px solid #444; border-bottom: 1px solid #444; }
+        .map-full-width { width: 100%; height: 100%; filter: grayscale(100%) invert(90%) contrast(95%); transition: 0.5s; }
+        .map-wrapper:hover .map-full-width { filter: none; }
+        .cert-img { filter: grayscale(1); opacity: 0.5; transition: 0.3s; height: 25px; }
+        .cert-img:hover { filter: grayscale(0); opacity: 1; }
+        footer { margin-top: auto; border-top: 4px solid #ffc107; }
+        .footer-top { padding: 50px 0; }
     </style>
 
     {% block css %}{% endblock %}
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'index' %}">
-                GYM AI COACH <i class="fas fa-dumbbell text-warning"></i>
+    <div class="top-bar d-none d-lg-block">
+        <div class="container d-flex justify-content-center gap-5">
+            <span><i class="fas fa-check-circle me-1 text-warning"></i> Thương hiệu Supplement uy tín</span>
+            <span><i class="fas fa-shield-alt me-1 text-warning"></i> Cam kết chuẩn 100% chính hãng</span>
+            <span><i class="fas fa-truck-fast me-1 text-warning"></i> Giao hàng nội thành 1 - 4H</span>
+        </div>
+    </div>
+
+    <header class="bg-brand-red py-2 sticky-top shadow-sm" style="z-index: 1030;">
+        <div class="container d-flex flex-wrap flex-lg-nowrap justify-content-between align-items-center gap-3">
+
+            <a href="{% url 'index' %}" class="text-white text-decoration-none d-flex align-items-center">
+                <i class="fas fa-dumbbell fa-lg me-2 text-warning"></i>
+                <h4 class="m-0 fw-bold fst-italic">GYM AI COACH<span style="font-size: 0.8rem; color: #ffc107;">®</span></h4>
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <form class="search-box flex-grow-1 mx-lg-4" action="{% url 'store:store' %}" method="GET" id="main-search-form">
+                <input type="text" name="search" id="main-search-bar" placeholder="Tìm kiếm Whey, BCAA, Creatine..." autocomplete="off">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
 
-            <div class="collapse navbar-collapse" id="navbarNav">
-
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'index' %}">Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'index' %}#list-exercises">Bài tập</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-warning" href="{% url 'store' %}">
-                            <i class="fas fa-shopping-cart"></i> Cửa hàng
-                        </a>
-                    </li>
-
-                    {% if user.is_staff %}
-
-                    <li class="nav-item ms-lg-3">
-                        <a class="nav-link btn btn-warning text-dark fw-bold px-3 rounded shadow-sm" href="{% url 'manage_orders' %}" style="color: #000 !important;">
-                            <i class="fas fa-clipboard-list me-1"></i> ĐƠN HÀNG
-                        </a>
-                    </li>
-
-                    <li class="nav-item ms-lg-2">
-                        <a class="nav-link btn btn-info text-dark fw-bold px-3 rounded shadow-sm" href="{% url 'manage_products' %}" style="color: #000 !important;">
-                            <i class="fas fa-boxes me-1"></i> KHO HÀNG
-                        </a>
-                    </li>
-
-                    <li class="nav-item ms-lg-2">
-                        <a class="nav-link btn btn-success text-white fw-bold px-3 rounded shadow-sm" href="{% url 'manage_exercises' %}">
-                            <i class="fas fa-dumbbell me-1"></i> QL BÀI TẬP
-                        </a>
-                    </li>
-
-                    {% endif %}
-                </ul>
-
-                <div class="d-flex align-items-center auth-buttons mt-3 mt-lg-0">
-                    {% if user.is_authenticated %}
-                        <span class="text-light me-3 d-none d-lg-block">Xin chào, <strong>{{ user.first_name }}</strong></span>
-
-                        <a href="{% url 'profile' %}" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-user-circle"></i> Hồ sơ
-                        </a>
-
-                        <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">
-                            <i class="fas fa-sign-out-alt"></i> Thoát
-                        </a>
-                    {% else %}
-                        <a href="{% url 'login' %}" class="text-light me-3">Đăng nhập</a>
-                        <a href="{% url 'register' %}" class="btn btn-warning text-dark fw-bold btn-sm">
-                            Đăng ký ngay
-                        </a>
-                    {% endif %}
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-white text-end d-none d-xl-block me-2">
+                    <div class="small opacity-75" style="font-size: 0.75rem;">Gọi mua hàng</div>
+                    <div class="fw-bold" style="font-size: 1.1rem;">0912 634 507</div>
                 </div>
+
+                <a href="{% url 'store:cart' %}" class="btn btn-outline-light header-btn d-flex align-items-center gap-2">
+                    <i class="fas fa-shopping-cart"></i> <span class="d-none d-sm-inline">Giỏ hàng</span>
+                    <span class="badge bg-warning text-dark rounded-pill">0</span>
+                </a>
+
+                {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-light header-btn text-danger dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i> <span class="d-none d-sm-inline">{{ user.first_name|default:user.username }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userMenu">
+                            <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i class="fas fa-id-card me-2 text-secondary"></i>Hồ sơ cá nhân</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'store:order_history' %}"><i class="fas fa-history me-2 text-secondary"></i>Lịch sử mua hàng</a></li>
+
+                            {% if user.is_staff %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item py-2 fw-bold text-primary" href="{% url 'store:manage_orders' %}">
+                                        <i class="fas fa-cogs me-2"></i>Hệ thống Quản trị (ERP)
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2 text-danger fw-bold" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'login' %}" class="btn btn-outline-light header-btn">Đăng nhập</a>
+                        <a href="{% url 'register' %}" class="btn btn-warning text-dark header-btn d-none d-sm-block">Đăng ký</a>
+                    </div>
+                {% endif %}
             </div>
+        </div>
+    </header>
+
+    <nav class="main-nav d-none d-lg-block">
+        <div class="container">
+            <ul class="nav justify-content-center">
+                <li class="nav-item"><a class="nav-link" href="{% url 'index' %}"><i class="fas fa-home me-1"></i> Trang Chủ</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'store:store' %}">Thực Phẩm Bổ Sung <i class="fas fa-chevron-down ms-1 small"></i></a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'store:store' %}#dung-cu-ho-tro">Phụ Kiện Tập Luyện</a></li>
+                <li class="nav-item"><a class="nav-link text-brand-red" href="{% url 'store:store' %}">Khuyến Mãi <i class="fas fa-tags ms-1"></i></a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#list-exercises">Kiến Thức & Bài Tập</a></li>
+            </ul>
         </div>
     </nav>
 
-    {% if messages %}
-    <div class="container mt-3">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    {% block content %}{% endblock %}
+
+    <footer class="bg-dark text-white mt-5">
+        <div class="container footer-top">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+                <div class="col">
+                    <h5 class="footer-title">Gym AI Coach</h5>
+                    <p class="small text-secondary" style="line-height: 1.8;">Kết nối với chúng tôi qua mạng xã hội để cập nhật kiến thức tập luyện mới nhất.</p>
+                    <div class="mt-3">
+                        <a href="#" class="social-icon face"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon yout"><i class="fab fa-youtube"></i></a>
+                        <a href="#" class="social-icon tik"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <h5 class="footer-title">Cửa hàng</h5>
+                    <a href="{% url 'store:store' %}#danh-muc-whey-protein" class="footer-link">Whey Protein</a>
+                    <a href="{% url 'store:store' %}#danh-muc-pre-workout-tang-suc-manh" class="footer-link">Pre-workout</a>
+                    <a href="{% url 'store:store' %}#danh-muc-vitamin-khoang-chat" class="footer-link">Vitamin & Khoáng chất</a>
+                    <a href="{% url 'store:store' %}#danh-muc-dung-cu-ho-tro-tap-luyen" class="footer-link">Dụng cụ tập luyện</a>
+                </div>
+
+                <div class="col">
+                    <h5 class="footer-title">Huấn luyện</h5>
+                    <a href="#" class="footer-link">Phân tích bài tập</a>
+                    <a href="#" class="footer-link">Lộ trình cá nhân</a>
+                    <a href="#" class="footer-link">AI Coach S-Pro</a>
+                </div>
+
+                <div class="col">
+                    <h5 class="footer-title">Trợ giúp</h5>
+                    <a href="#" class="footer-link">Hướng dẫn mua hàng</a>
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=cuong.2k500@gmail.com&su=%5BGym%20AI%20Coach%5D%20Khi%E1%BB%83u%20n%E1%BA%A1i%20%26%20G%C3%B3p%20%C3%BD" target="_blank" class="footer-link">Khiếu nại & Góp ý</a>
+                </div>
+
+                <div class="col">
+                    <h5 class="footer-title">Liên hệ</h5>
+                    <p class="small text-secondary mb-2"><i class="fas fa-phone text-warning me-2"></i> 0912 634 507</p>
+                    <p class="small text-secondary mb-2"><i class="fas fa-envelope text-warning me-2"></i> admin@gym.com</p>
+                    <p class="small text-secondary mb-0"><i class="fas fa-clock text-warning me-2"></i> 08:00 - 22:00</p>
+                </div>
             </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        </div>
 
-    {% block content %}
-    {% endblock %}
+        <div class="container-fluid px-0">
+            <div class="map-wrapper shadow-lg">
+                <iframe
+                    class="map-full-width"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.520195255977!2d106.70114007584107!3d10.77143165928373!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f40a3b49ad5%3A0x11ad570745d5ad7d!2zVMOyYSBuaMOAIEJpdGV4Y28!5e0!3m2!1svi!2s!4v1712123456789"
+                    style="border:0;" allowfullscreen="" loading="lazy">
+                </iframe>
+            </div>
+        </div>
 
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-        <div class="container">
-            <p class="mb-1">&copy; 2026 Gym AI Coach. All rights reserved.</p>
-            <p class="mb-0 text-light">
-                📧 Email: <a href="mailto:cuong.2k500@gmail.com" class="text-warning text-decoration-none fw-bold">cuong.2k500@gmail.com</a> |
-                📞 Hotline: <a href="tel:0912634507" class="text-warning text-decoration-none fw-bold">0912634507</a>
-            </p>
+        <div class="container py-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="small text-secondary mb-0">© 2026 <strong>Gym AI Coach</strong>. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" class="cert-img me-3" alt="Visa">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" class="cert-img me-3" alt="MasterCard">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" class="cert-img me-3" alt="PayPal">
+                </div>
+            </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Kích hoạt Autocomplete cho thanh tìm kiếm ở Header
+            $("#main-search-bar").autocomplete({
+                source: "{% url 'store:exercise_autocomplete' %}", // API từ views.py
+                minLength: 2, // Gõ 2 chữ mới hiện
+                select: function(event, ui) {
+                    // KHI BẤM CHỌN 1 GỢI Ý: Chuyển hướng thẳng đến URL của sản phẩm/bài tập
+                    if (ui.item.url) {
+                        window.location.href = ui.item.url;
+                        return false; // Chặn hành vi submit form mặc định
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

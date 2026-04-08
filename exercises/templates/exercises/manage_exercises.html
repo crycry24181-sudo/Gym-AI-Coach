@@ -1,40 +1,140 @@
-{% extends 'core/base.html' %}
+{% extends 'core/admin_base.html' %}
+{% load static %}
 
-{% block content %}
-<div class="container" style="margin-top: 100px;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-white text-uppercase">Quản lý Bài tập</h2>
-        <a href="{% url 'add_exercise' %}" class="btn btn-warning fw-bold">
-            <i class="fas fa-plus"></i> Thêm bài mới
+{% block admin_content %}
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<style>
+    /* Style chuẩn ERP - Sạch sẽ, hiện đại */
+    .erp-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 0; border: 1px solid #e2e8f0; overflow: hidden; }
+    .erp-table { width: 100%; border-collapse: collapse; }
+    .erp-table th { background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; padding: 16px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .erp-table td { border-bottom: 1px solid #f1f5f9; padding: 16px; color: #334155; vertical-align: middle; font-size: 0.95rem; }
+    .erp-table tr:hover td { background-color: #f8fafc; transition: 0.2s; }
+
+    /* Search Bar Style */
+    .search-container { position: relative; max-width: 450px; }
+    .search-input { padding: 10px 15px 10px 45px; border-radius: 10px; border: 1px solid #e2e8f0; width: 100%; font-size: 0.95rem; transition: 0.3s; background-color: #fff; }
+    .search-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+    .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; z-index: 5; }
+
+    /* Custom lại bảng gợi ý cho chuyên nghiệp */
+    .ui-autocomplete { border-radius: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; padding: 8px 0; z-index: 9999 !important; }
+    .ui-menu-item-wrapper { padding: 10px 20px !important; font-size: 0.9rem; color: #334155; border: none !important; }
+    .ui-state-active { background-color: #eff6ff !important; color: #2563eb !important; border: none !important; margin: 0 !important; }
+
+    /* Badge nhóm cơ */
+    .muscle-badge { background-color: #eff6ff; color: #2563eb; font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; font-weight: 600; display: inline-block; border: 1px solid #dbeafe; }
+
+    /* Nút bấm kiểu mới */
+    .btn-erp-add { background: #0f172a; color: #fff; padding: 10px 22px; font-weight: 600; border-radius: 10px; font-size: 0.9rem; text-decoration: none; transition: 0.3s; display: inline-flex; align-items: center; border: none; }
+    .btn-erp-add:hover { background: #334155; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    .btn-action-icon { width: 36px; height: 36px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; text-decoration: none; border: 1px solid #e2e8f0; background: #fff; }
+    .btn-action-icon.edit { color: #2563eb; }
+    .btn-action-icon.edit:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn-action-icon.delete { color: #ef4444; }
+    .btn-action-icon.delete:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+    .video-link { color: #2563eb; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #f0f7ff; border-radius: 6px; font-size: 0.85rem; }
+    .video-link:hover { background: #dbeafe; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0" style="color: #0f172a; font-size: 1.6rem;">
+            <i class="fas fa-dumbbell me-2 text-primary"></i>Quản lý Bài tập
+        </h3>
+        <p class="text-muted small mt-1 mb-0">Tìm kiếm thông minh và tổ chức kho dữ liệu</p>
+    </div>
+    <a href="{% url 'store:add_exercise' %}" class="btn-erp-add shadow-sm">
+        <i class="fas fa-plus-circle me-2"></i>Thêm bài tập mới
+    </a>
+</div>
+
+<div class="mb-4 d-flex align-items-center justify-content-between">
+    <form method="GET" action="{% url 'store:manage_exercises' %}" id="search-form" class="search-container flex-grow-1">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" name="search" id="exercise-search" class="search-input shadow-sm" placeholder="Gõ tên bài tập (VD: Deadlift, Bench...)" value="{{ request.GET.search }}" autocomplete="off">
+    </form>
+
+    {% if request.GET.search %}
+    <div class="ms-3">
+        <a href="{% url 'store:manage_exercises' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm" style="font-size: 0.85rem;">
+            <i class="fas fa-undo me-1"></i> Làm mới
         </a>
     </div>
+    {% endif %}
+</div>
 
+<div class="erp-card">
     <div class="table-responsive">
-        <table class="table table-dark table-hover border-secondary">
+        <table class="erp-table">
             <thead>
                 <tr>
-                    <th>Tên bài tập</th>
-                    <th>Nhóm cơ</th>
-                    <th>Video/GIF</th>
-                    <th>Hành động</th>
+                    <th class="ps-4">Tên bài tập & ID</th>
+                    <th class="text-center">Nhóm cơ chính</th>
+                    <th class="text-center">Tài liệu Video/GIF</th>
+                    <th class="text-end pe-4">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in exercises %}
                 <tr>
-                    <td class="align-middle fw-bold">{{ item.title }}</td>
-                    <td class="align-middle"><span class="badge bg-info">{{ item.get_muscle_group_display }}</span></td>
-                    <td class="align-middle">
+                    <td class="ps-4">
+                        <div class="fw-bold" style="color: #0f172a; font-size: 1.05rem;">{{ item.name|default:"Chưa đặt tên" }}</div>
+                        <div class="small text-muted" style="font-size: 0.8rem;">Mã số: #{{ item.id }}</div>
+                    </td>
+
+                    <td class="text-center">
+                        <span class="muscle-badge">
+                            <i class="fas fa-bullseye me-1"></i> {{ item.get_muscle_group_display }}
+                        </span>
+                    </td>
+
+                    <td class="text-center">
                         {% if item.video_file %}
-                            <a href="{{ item.video_file.url }}" target="_blank" class="text-warning">Xem file</a>
+                            <a href="{{ item.video_file.url }}" target="_blank" class="video-link">
+                                <i class="fas fa-play-circle text-primary"></i> Xem File
+                            </a>
+                        {% elif item.image and ".mp4" in item.image.url or item.image and ".mov" in item.image.url %}
+                            <a href="{{ item.image.url }}" target="_blank" class="video-link" style="color: #0891b2; background: #ecfeff;">
+                                <i class="fas fa-file-video"></i> Video (ô ảnh)
+                            </a>
+                        {% elif item.video_url %}
+                            <a href="{{ item.video_url }}" target="_blank" class="video-link" style="color: #dc2626; background: #fef2f2;">
+                                <i class="fab fa-youtube"></i> Youtube
+                            </a>
                         {% else %}
-                            <span class="text-muted">Không có</span>
+                            <span class="text-muted small" style="font-style: italic;">Chưa cập nhật</span>
                         {% endif %}
                     </td>
-                    <td class="align-middle">
-                        <a href="{% url 'delete_exercise' item.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Bạn chắc chắn muốn xóa?')">
-                            <i class="fas fa-trash"></i> Xóa
-                        </a>
+
+                    <td class="text-end pe-4">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'store:edit_exercise' item.id %}" class="btn-action-icon edit" title="Chỉnh sửa nội dung">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                            <a href="{% url 'store:delete_exercise' item.id %}" class="btn-action-icon delete"
+                               onclick="return confirm('Xác nhận xóa bài tập: {{ item.name }}?')" title="Xóa bài tập">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-5">
+                        <div class="py-4">
+                            {% if request.GET.search %}
+                                <i class="fas fa-search fa-3x mb-3 text-muted opacity-50"></i>
+                                <h5 class="text-muted">Không tìm thấy kết quả cho "{{ request.GET.search }}"</h5>
+                                <a href="{% url 'store:manage_exercises' %}" class="text-primary text-decoration-none">Quay lại danh sách đầy đủ</a>
+                            {% else %}
+                                <i class="fas fa-dumbbell fa-4x mb-3 text-muted opacity-50"></i>
+                                <h5 class="text-muted">Kho bài tập đang trống</h5>
+                                <p class="text-muted small">Hãy nhấn "Thêm bài tập mới" để bắt đầu.</p>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -42,4 +142,25 @@
         </table>
     </div>
 </div>
+
+<div class="mt-4">
+    <a href="{% url 'store:admin_dashboard' %}" class="text-muted text-decoration-none small">
+        <i class="fas fa-chevron-left me-1"></i> Quay lại Bảng điều khiển
+    </a>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<script>
+    $(function() {
+        $("#exercise-search").autocomplete({
+            source: "{% url 'store:exercise_autocomplete' %}", // Đảm bảo URL này khớp với urls.py của ông
+            minLength: 2,
+            select: function(event, ui) {
+                $("#exercise-search").val(ui.item.value);
+                $("#search-form").submit(); // Tự động tìm khi chọn
+            }
+        });
+    });
+</script>
 {% endblock %}

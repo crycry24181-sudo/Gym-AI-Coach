@@ -1,0 +1,86 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5" style="margin-top: 100px; min-height: 80vh;">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card bg-dark text-white shadow-lg border-secondary rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-center py-4 border-secondary">
+                    <h3 class="mb-0 fw-bold text-uppercase">
+                        <i class="fas fa-edit me-2"></i> Chỉnh Sửa Bài Tập
+                    </h3>
+                    <p class="mb-0 small opacity-75">Cập nhật thông tin chi tiết cho bài tập #{{ exercise.id }}</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                        <div class="mb-4">
+                            <label class="fw-bold mb-2 text-warning">
+                                <i class="fas fa-chevron-right me-1 small"></i> {{ field.label }}
+                            </label>
+
+                            {{ field }}
+
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">{{ field.errors }}</div>
+                            {% endif %}
+
+                            {% if field.help_text %}
+                                <small class="text-muted d-block mt-1">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-3 mt-5">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm py-3 text-uppercase">
+                                <i class="fas fa-save me-2"></i> Lưu thay đổi ngay
+                            </button>
+
+                            <a href="{% url 'store:manage_exercises' %}" class="btn btn-outline-light fw-bold py-2 shadow-sm">
+                                <i class="fas fa-times me-1"></i> Hủy bỏ & Quay lại
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* "Độ" lại các ô nhập liệu cho đẹp trên nền tối */
+    input[type="text"], input[type="number"], select, textarea, input[type="file"], input[type="url"] {
+        display: block;
+        width: 100%;
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+        color: #fff;
+        background-color: #2b3035; /* Màu nền tối */
+        border: 1px solid #495057;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease-in-out;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        background-color: #343a40;
+        border-color: #0d6efd;
+        color: #fff;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Tùy chỉnh riêng cho ô chọn file */
+    input[type="file"]::file-selector-button {
+        background-color: #495057;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 2px 10px;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}

@@ -1,32 +1,197 @@
 {% extends 'core/base.html' %}
-{% block content %}
-<div class="container py-5" style="margin-top: 80px;">
-    <h2 class="text-center" style="color: black; font-weight: bold; margin: 20px 0;">CÁC BÀI TẬP: <span class="text-warning">{{ current_name }}</span></h2>
+{% load static %}
 
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        {% for ex in exercises %}
-        <div class="col">
-            <div class="card h-100 bg-dark text-white border-secondary">
-                <div class="ratio ratio-4x3">
-                    {% if ex.video_file %}
-                        {% if ".mp4" in ex.video_file.url %}
-                            <video class="card-img-top object-fit-cover" muted loop onmouseover="this.play()" onmouseout="this.pause()">
-                                <source src="{{ ex.video_file.url }}" type="video/mp4">
-                            </video>
-                        {% else %}
-                            <img src="{{ ex.video_file.url }}" class="card-img-top object-fit-cover">
-                        {% endif %}
-                    {% endif %}
+{% block content %}
+<div class="container pt-3 pb-5" style="margin-top: 10px; min-height: 80vh;">
+
+    {% if benefit_text %}
+    <div class="ai-coach-wrapper mb-5" style="width: 100%;">
+        <div class="benefit-box shadow-sm bg-white"
+             style="border-left: 6px solid #ffc107; border-radius: 12px; position: relative; overflow: hidden; padding: 40px;">
+
+            <i class="fas fa-dumbbell" style="position: absolute; right: -20px; bottom: -20px; font-size: 8rem; color: rgba(255, 193, 7, 0.08); transform: rotate(-20deg);"></i>
+
+            <h5 class="text-dark fw-bold mb-3 d-flex align-items-center" style="letter-spacing: 1px; font-size: 1.4rem;">
+                <i class="fas fa-lightbulb text-warning me-3 fa-lg"></i> LỜI KHUYÊN TỪ AI COACH:
+            </h5>
+
+            <p class="text-secondary mb-0 ps-5" style="font-size: 1.15rem; line-height: 1.8; font-style: italic; text-align: justify; position: relative; z-index: 1;">
+                "{{ benefit_text }}"
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <h2 class="text-center text-uppercase" style="color: black; font-weight: 900; margin: 0 0 40px 0; letter-spacing: 2px;">
+        CÁC BÀI TẬP: <span class="text-warning">{{ current_name }}</span>
+    </h2>
+
+    <div class="row g-4">
+
+        <div class="col-lg-8">
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                {% for ex in exercises %}
+                <div class="col">
+                    <div class="card h-100 bg-dark text-white border-0 shadow-lg exercise-card" style="border-radius: 15px; overflow: hidden;">
+                        <div class="ratio ratio-4x3 bg-secondary">
+                            {% if ex.video_file %}
+                                <video class="card-img-top object-fit-cover w-100 h-100" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                                    <source src="{{ ex.video_file.url }}" type="video/mp4">
+                                </video>
+                            {% elif ex.image %}
+                                {% if ".mp4" in ex.image.url or ".mov" in ex.image.url %}
+                                    <video class="card-img-top object-fit-cover w-100 h-100" muted loop onmouseover="this.play()" onmouseout="this.pause()">
+                                        <source src="{{ ex.image.url }}" type="video/mp4">
+                                    </video>
+                                {% else %}
+                                    <img src="{{ ex.image.url }}" class="card-img-top object-fit-cover w-100 h-100" alt="{{ ex.name }}">
+                                {% endif %}
+                            {% else %}
+                                <div class="d-flex justify-content-center align-items-center h-100 text-muted">
+                                    <i class="fas fa-dumbbell fa-4x opacity-25"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body text-center d-flex flex-column justify-content-between p-4">
+                            <h5 class="card-title text-warning fw-bold text-uppercase mb-3" style="letter-spacing: 1px; min-height: 3rem; display: flex; align-items: center; justify-content: center;">
+                                {{ ex.name }}
+                            </h5>
+                            <a href="{% url 'store:exercise_detail' ex.id %}" class="btn btn-outline-light mt-auto fw-bold rounded-pill border-2 shadow-sm py-2">
+                                Xem hướng dẫn <i class="fas fa-play-circle ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body text-center">
-                    <h5 class="card-title text-warning">{{ ex.title }}</h5>
-                    <a href="{% url 'exercise_detail' ex.id %}" class="btn btn-outline-light mt-2">Xem hướng dẫn tập</a>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3 opacity-50"></i>
+                    <h4 class="text-muted fw-bold">Chưa có bài tập nào cho nhóm cơ này.</h4>
                 </div>
+                {% endfor %}
             </div>
         </div>
-        {% empty %}
-        <p class="text-white text-center">Chưa có bài tập nào cho nhóm cơ này.</p>
-        {% endfor %}
+
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 100px; z-index: 1;">
+
+                <h5 class="fw-bold mb-3 text-uppercase d-flex align-items-center" style="color: #333;">
+                    <i class="fas fa-shopping-bag text-danger me-2"></i> Trợ thủ đắc lực
+                </h5>
+
+                {% if 'LƯNG' in current_name|upper or 'XÔ' in current_name|upper %}
+                    <a href="{% url 'store:store' %}#danh-muc-dung-cu-ho-tro-tap-luyen" class="text-decoration-none">
+                        <div class="card mb-3 border-0 shadow-sm recommend-card" style="border-radius: 12px; overflow: hidden;">
+                            <img src="/media/products/strap1.webp" class="card-img-top" alt="Quấn cổ tay" style="height: 140px; object-fit: cover;">
+                            <div class="card-body bg-white text-center p-3">
+                                <h6 class="fw-bold text-dark mb-1 text-uppercase">Quấn Cổ Tay Cử Tạ</h6>
+                                <p class="small text-muted mb-0">Khóa chặt thanh đòn, kéo lưng hết nấc</p>
+                            </div>
+                        </div>
+                    </a>
+
+                {% elif 'CHÂN' in current_name|upper or 'MÔNG' in current_name|upper %}
+                    <a href="{% url 'store:store' %}#danh-muc-dung-cu-ho-tro-tap-luyen" class="text-decoration-none">
+                        <div class="card mb-3 border-0 shadow-sm recommend-card" style="border-radius: 12px; overflow: hidden;">
+                            <img src="/media/products/dai1.webp" class="card-img-top" alt="Đai lưng" style="height: 140px; object-fit: cover;">
+                            <div class="card-body bg-white text-center p-3">
+                                <h6 class="fw-bold text-dark mb-1 text-uppercase">Đai Lưng Bảo Vệ</h6>
+                                <p class="small text-muted mb-0">Khóa Core vững chắc, Squat siêu an toàn</p>
+                            </div>
+                        </div>
+                    </a>
+
+                {% elif 'TAY' in current_name|upper %}
+                    <a href="{% url 'store:store' %}#danh-muc-dung-cu-ho-tro-tap-luyen" class="text-decoration-none">
+                        <div class="card mb-3 border-0 shadow-sm recommend-card" style="border-radius: 12px; overflow: hidden;">
+                            <img src="/media/products/kim1.webp" class="card-img-top" alt="Kìm bóp tay" style="height: 140px; object-fit: cover;">
+                            <div class="card-body bg-white text-center p-3">
+                                <h6 class="fw-bold text-dark mb-1 text-uppercase">Kìm Bóp Tay Lõi Thép</h6>
+                                <p class="small text-muted mb-0">Tăng lực nắm, cẳng tay cuồn cuộn</p>
+                            </div>
+                        </div>
+                    </a>
+
+                {% else %}
+                    <a href="{% url 'store:store' %}#danh-muc-pre-workout-tang-suc-manh" class="text-decoration-none">
+                        <div class="card mb-3 border-0 shadow-sm recommend-card" style="border-radius: 12px; overflow: hidden;">
+                            <img src="/media/product_gallery/pre33.webp" class="card-img-top" alt="Pre-workout" style="height: 140px; object-fit: cover;">
+                            <div class="card-body bg-white text-center p-3">
+                                <h6 class="fw-bold text-dark mb-1 text-uppercase">Pre-Workout Bùng Nổ</h6>
+                                <p class="small text-muted mb-0">Bơm máu cực đại, đẩy tạ sung mãn</p>
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                <a href="{% url 'store:store' %}#danh-muc-whey-protein" class="text-decoration-none">
+                    <div class="card mb-3 border-0 shadow-sm recommend-card" style="border-radius: 12px; overflow: hidden;">
+                        <img src="/media/products/wheyrule14.webp" class="card-img-top" alt="Whey Protein" style="height: 140px; object-fit: cover;">
+                        <div class="card-body bg-white text-center p-3">
+                            <h6 class="fw-bold text-dark mb-1 text-uppercase">Whey Phục Hồi Cơ Bắp</h6>
+                            <p class="small text-muted mb-0">Nạp protein ngay sau khi tập</p>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{% url 'store:store' %}#danh-muc-creatine" class="text-decoration-none">
+                    <div class="card mb-3 border-0 shadow-sm recommend-card" style="border-radius: 12px; overflow: hidden;">
+                        <img src="/media/products/creatine1.webp" class="card-img-top" alt="Creatine Tăng Sức Mạnh" style="height: 140px; object-fit: cover;">
+                        <div class="card-body bg-white text-center p-3">
+                            <h6 class="fw-bold text-dark mb-1 text-uppercase">Creatine Tinh Khiết</h6>
+                            <p class="small text-muted mb-0">Bơm nước vào cơ, phá vỡ giới hạn</p>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+
     </div>
 </div>
+
+<style>
+    /* HIỆU ỨNG CARD BÀI TẬP */
+    .exercise-card {
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    }
+    .exercise-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.4) !important;
+    }
+
+    /* HIỆU ỨNG CHO CARD ĐỀ XUẤT BÊN PHẢI */
+    .recommend-card {
+        transition: all 0.3s ease;
+        border: 1px solid #f1f5f9 !important;
+    }
+    .recommend-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(211, 35, 42, 0.15) !important;
+        border-color: #ffe4e6 !important;
+    }
+    .recommend-card img {
+        transition: transform 0.5s ease;
+    }
+    .recommend-card:hover img {
+        transform: scale(1.05);
+    }
+
+    /* HIỆU ỨNG NÚT BẤM VÀ LỜI KHUYÊN AI */
+    .btn-outline-light:hover {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+        transform: scale(1.05);
+    }
+
+    .benefit-box {
+        animation: fadeInDown 0.8s ease-out;
+    }
+
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 {% endblock %}

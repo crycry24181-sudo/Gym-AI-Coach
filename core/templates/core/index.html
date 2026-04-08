@@ -3,165 +3,257 @@
 
 {% block css %}
 <style>
-    /* --- BANNER --- */
-    .hero-section {
-        min-height: 85vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        color: white;
-        background-color: #1a1a1a;
+    /* ================= KHU VỰC HERO BANNERS (Layout 1 To - 2 Nhỏ) ================= */
+    .hero-container { margin-top: 25px; margin-bottom: 40px; }
 
-        /* Ảnh nền Banner */
-        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("{% static 'images/banner.jpg' %}");
-
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center bottom;
-        border-radius: 0 0 50px 50px;
-        margin-bottom: 50px;
-        padding: 0;
-    }
-
-    .main-heading {
-        font-weight: 900;
-        color: #ffffff;
-        text-transform: uppercase;
-        font-size: 4rem;
-        margin-bottom: 20px;
-        text-shadow: 4px 4px 10px rgba(0,0,0,1);
-    }
-
-    /* --- THẺ BÀI TẬP --- */
-    .muscle-card {
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: none;
-        border-radius: 15px;
+    /* Carousel (Lớn) - Trái */
+    .hero-carousel-wrapper {
+        height: 420px; /* Cố định chiều cao để không bị quá lố */
+        border-radius: 12px;
         overflow: hidden;
-        background-color: #fff;
+        position: relative;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
-    .muscle-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    .hero-carousel-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+
+    /* Khi rê chuột vào các ảnh quảng cáo sản phẩm sẽ hơi zoom nhẹ */
+    .product-slide:hover img { transform: scale(1.03); }
+
+    /* Lớp overlay đen mờ cho RIÊNG cái slide đầu tiên để làm nổi bật chữ */
+    .banner-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.65); z-index: 1;
     }
-    .muscle-card img {
-        height: 200px; /* Giảm chiều cao chút để cân đối với bố cục 4 cột */
-        object-fit: cover;
-        width: 100%;
-    }
-    .card-title {
-        font-weight: 800;
-        text-transform: uppercase;
-        margin-bottom: 0;
-        font-size: 1.1rem;
-    }
+
+    /* Chữ to trung tâm */
+    .main-heading { font-weight: 900; color: #ffffff; text-transform: uppercase; font-size: 2.8rem; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.8); letter-spacing: -1px; }
+
+    /* ================= PHẦN DANH MỤC BÀI TẬP ================= */
+    .section-title { color: #111; font-weight: 800; text-transform: uppercase; margin-bottom: 25px; font-size: 1.5rem; }
+    .muscle-card { transition: all 0.3s ease; cursor: pointer; border: none; border-radius: 12px; overflow: hidden; }
+    .muscle-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .muscle-card img { height: 180px; object-fit: cover; width: 100%; }
+    .card-title { font-weight: 800; text-transform: uppercase; margin-bottom: 0; font-size: 1.05rem; }
 </style>
 {% endblock %}
 
 {% block content %}
+    <div class="container hero-container">
+        <div class="row g-3">
 
-    <div class="container-fluid p-0">
-        <div class="hero-section">
-            <div class="container">
-                <h1 class="main-heading">HÔM NAY BẠN MUỐN TẬP GÌ?</h1>
-                <p class="fs-4 text-light">Chọn nhóm cơ bạn muốn phát triển</p>
+            <div class="col-lg-8">
+                <div id="heroCarousel" class="carousel slide carousel-fade hero-carousel-wrapper" data-bs-ride="carousel">
+                    <div class="carousel-inner h-100">
 
-                <a href="#list-exercises" class="btn btn-primary btn-lg mt-3 rounded-pill px-5 shadow border-0" style="background-color: #0d6efd;">
-                    <i class="fas fa-fire me-2"></i> BẮT ĐẦU NGAY
-                </a>
+                        <div class="carousel-item active h-100" data-bs-interval="4000">
+                            <div class="banner-overlay"></div>
+                            <img src="{% static 'images/bannerr.png' %}" alt="Gym AI Coach">
+                            <div class="carousel-caption d-flex flex-column justify-content-center h-100 pb-0" style="bottom: 0; z-index: 2;">
+                                <h1 class="main-heading">HÔM NAY BẠN MUỐN TẬP GÌ?</h1>
+                                <p class="fs-5 fw-light mb-4">Chọn nhóm cơ bạn muốn phát triển</p>
+                                <div><a href="#list-exercises" class="btn btn-primary rounded-pill px-5 shadow fw-bold">BẮT ĐẦU NGAY</a></div>
+                            </div>
+                        </div>
+
+                        <div class="carousel-item h-100 product-slide" data-bs-interval="4000">
+                            <a href="{% url 'store:store' %}#danh-muc-whey-protein">
+                                <img src="/media/products/wheyrule14.webp" alt="Whey Protein">
+                            </a>
+                        </div>
+
+                        <div class="carousel-item h-100 product-slide" data-bs-interval="4000">
+                            <a href="{% url 'store:store' %}#danh-muc-vitamin-khoang-chat">
+                                <img src="/media/products/zinc1.jpg" alt="Vitamin Kẽm">
+                            </a>
+                        </div>
+
+                        <div class="carousel-item h-100 product-slide" data-bs-interval="4000">
+                            <a href="{% url 'store:store' %}#danh-muc-dung-cu-ho-tro-tap-luyen">
+                                <img src="/media/products/ta.webp" alt="Tạ Tập">
+                            </a>
+                        </div>
+
+                    </div>
+
+                    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
             </div>
+
+            <div class="col-lg-4 d-flex flex-column gap-3">
+
+                <div id="sideBannerCarousel" class="carousel slide shadow-sm" data-bs-ride="carousel" data-bs-interval="3000" style="border-radius: 12px; overflow: hidden; height: 202px;">
+                    <div class="carousel-inner h-100">
+                        <div class="carousel-item active h-100">
+                            <a href="{% url 'store:store' %}#danh-muc-dung-cu-ho-tro-tap-luyen">
+                                <img src="/media/product_gallery/ct25.webp" class="d-block w-100 h-100" alt="Banner 1" style="object-fit: cover;">
+                            </a>
+                        </div>
+                        <div class="carousel-item h-100">
+                            <a href="{% url 'store:store' %}#danh-muc-dung-cu-ho-tro-tap-luyen">
+                                <img src="/media/product_gallery/dai11.webp" class="d-block w-100 h-100" alt="Banner 2" style="object-fit: cover;">
+                            </a>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#sideBannerCarousel" data-bs-slide="prev" style="opacity: 0.5;">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#sideBannerCarousel" data-bs-slide="next" style="opacity: 0.5;">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <div class="bg-white p-3 shadow-sm position-relative d-flex flex-column justify-content-center" style="border-radius: 12px; border: 2px dashed #d3232a; height: 202px;">
+                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger px-3 py-1" style="font-size: 0.8rem; z-index: 2;">
+                        <i class="fas fa-gift me-1"></i> ƯU ĐÃI HÔM NAY
+                    </span>
+
+                    <div class="mt-2">
+                        <div class="d-flex justify-content-between align-items-center p-2 mb-2 rounded bg-light border border-white" style="box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
+                            <div>
+                                <strong class="text-danger d-block mb-0" style="font-size: 0.95rem; letter-spacing: 0.5px;">NEWBIE50</strong>
+                                <small class="text-muted" style="font-size: 0.7rem;">Giảm 50K cho đơn từ 400K</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold btn-save-voucher" data-code="NEWBIE50" onclick="saveVoucher(this, 'NEWBIE50')" style="font-size: 0.75rem; min-width: 65px; transition: 0.3s;">
+                                Lưu mã
+                            </button>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light border border-white" style="box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
+                            <div>
+                                <strong class="text-danger d-block mb-0" style="font-size: 0.95rem; letter-spacing: 0.5px;">FLASH30</strong>
+                                <small class="text-muted" style="font-size: 0.7rem;">Giảm thẳng 30K siêu tốc</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold btn-save-voucher" data-code="FLASH30" onclick="saveVoucher(this, 'FLASH30')" style="font-size: 0.75rem; min-width: 65px; transition: 0.3s;">
+                                Lưu mã
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     </div>
 
     <div class="container mb-5" id="list-exercises">
-        <h2 class="text-center" style="color: black; font-weight: bold; margin-top: 20px;">DANH MỤC BÀI TẬP</h2>
+        <h2 class="text-center section-title">DANH MỤC BÀI TẬP</h2>
 
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mt-1">
             <div class="col">
-                <div class="card muscle-card h-100 shadow-sm">
+                <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/nguc.webp' %}" class="card-img-top" alt="Ngực">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center bg-light">
                         <h5 class="card-title">NGỰC</h5>
-                        <a href="{% url 'exercise_list' 'CHEST' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
+                        <a href="{% url 'store:exercise_list_by_group' 'CHEST' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
                     </div>
                 </div>
             </div>
-
             <div class="col">
-                <div class="card muscle-card h-100 shadow-sm">
+                <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/lung.png' %}" class="card-img-top" alt="Lưng Xô">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center bg-light">
                         <h5 class="card-title">LƯNG / XÔ</h5>
-                        <a href="{% url 'exercise_list' 'BACK' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
+                        <a href="{% url 'store:exercise_list_by_group' 'BACK' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
                     </div>
                 </div>
             </div>
-
             <div class="col">
-                <div class="card muscle-card h-100 shadow-sm">
+                <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/vai.jpg' %}" class="card-img-top" alt="Vai">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center bg-light">
                         <h5 class="card-title">VAI</h5>
-                        <a href="{% url 'exercise_list' 'SHOULDERS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
+                        <a href="{% url 'store:exercise_list_by_group' 'SHOULDERS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
                     </div>
                 </div>
             </div>
-
             <div class="col">
-                <div class="card muscle-card h-100 shadow-sm">
+                <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/tay_truoc.jpg' %}" class="card-img-top" alt="Tay Trước">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center bg-light">
                         <h5 class="card-title">TAY TRƯỚC</h5>
-                        <a href="{% url 'exercise_list' 'BICEPS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
+                        <a href="{% url 'store:exercise_list_by_group' 'BICEPS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
                     </div>
                 </div>
             </div>
-
             <div class="col">
-                <div class="card muscle-card h-100 shadow-sm">
+                <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/tay_sau.jpg' %}" class="card-img-top" alt="Tay Sau">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center bg-light">
                         <h5 class="card-title">TAY SAU</h5>
-                        <a href="{% url 'exercise_list' 'TRICEPS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
+                        <a href="{% url 'store:exercise_list_by_group' 'TRICEPS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
                     </div>
                 </div>
             </div>
-
             <div class="col">
-                <div class="card muscle-card h-100 shadow-sm">
+                <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/bung.jpg' %}" class="card-img-top" alt="Bụng">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center bg-light">
                         <h5 class="card-title">BỤNG</h5>
-                        <a href="{% url 'exercise_list' 'ABS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
+                        <a href="{% url 'store:exercise_list_by_group' 'ABS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
                     </div>
                 </div>
             </div>
-
             <div class="col">
-                <div class="card muscle-card h-100 shadow-sm">
+                <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/chan.jpg' %}" class="card-img-top" alt="Chân Mông">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center bg-light">
                         <h5 class="card-title">CHÂN / MÔNG</h5>
-                        <a href="{% url 'exercise_list' 'LEGS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
+                        <a href="{% url 'store:exercise_list_by_group' 'LEGS' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
                     </div>
                 </div>
             </div>
-
             <div class="col">
-                <div class="card muscle-card h-100 shadow-sm">
+                <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/cardio.jpeg' %}" class="card-img-top" alt="Cardio">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center bg-light">
                         <h5 class="card-title">TIM MẠCH (CARDIO)</h5>
-                        <a href="{% url 'exercise_list' 'CARDIO' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
+                        <a href="{% url 'store:exercise_list_by_group' 'CARDIO' %}" class="btn btn-outline-dark mt-2 stretched-link w-100 btn-sm fw-bold">Xem bài tập</a>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
+    <script>
+        // 1. Khi vừa load web, kiểm tra ngay xem khách đã từng lưu mã chưa
+        document.addEventListener("DOMContentLoaded", function() {
+            let savedVouchers = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
+
+            document.querySelectorAll('.btn-save-voucher').forEach(btn => {
+                let code = btn.getAttribute('data-code');
+                // Nếu mã đã nằm trong kho lưu trữ thì đổi trạng thái nút
+                if (savedVouchers.includes(code)) {
+                    btn.innerText = "Đã lưu";
+                    btn.classList.remove('btn-outline-danger');
+                    btn.classList.add('btn-success', 'text-white', 'disabled');
+                    btn.disabled = true; // Khóa nút không cho bấm nữa
+                }
+            });
+        });
+
+        // 2. Hành động khi khách bấm vào nút "Lưu mã"
+        function saveVoucher(btnElement, code) {
+            // Vẫn copy vào clipboard cho tiện lợi
+            navigator.clipboard.writeText(code);
+
+            let savedVouchers = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
+
+            // Nếu mã chưa được lưu thì tiến hành lưu
+            if (!savedVouchers.includes(code)) {
+                savedVouchers.push(code);
+                localStorage.setItem('gym_vouchers', JSON.stringify(savedVouchers));
+
+                // Đổi giao diện nút sang Xanh (thành công) và khóa nút vĩnh viễn (cho đến khi mua hàng)
+                btnElement.innerText = "Đã lưu";
+                btnElement.classList.remove('btn-outline-danger');
+                btnElement.classList.add('btn-success', 'text-white', 'disabled');
+                btnElement.disabled = true;
+            }
+        }
+    </script>
 {% endblock %}

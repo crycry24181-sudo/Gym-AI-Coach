@@ -1,61 +1,179 @@
-{% extends 'core/base.html' %}
+{% extends 'core/admin_base.html' %}
 {% load static %}
 
-{% block content %}
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-uppercase"><i class="fas fa-boxes"></i> Quản lý Sản phẩm</h2>
-        <a href="{% url 'add_product' %}" class="btn btn-success fw-bold">
-            <i class="fas fa-plus-circle"></i> THÊM MỚI
+{% block admin_content %}
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+<style>
+    .erp-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 0; border: 1px solid #e2e8f0; overflow: hidden; }
+    .erp-table { width: 100%; border-collapse: collapse; }
+    .erp-table th { background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; padding: 16px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .erp-table td { border-bottom: 1px solid #f1f5f9; padding: 16px; color: #334155; vertical-align: middle; font-size: 0.95rem; }
+    .erp-table tr:hover td { background-color: #f8fafc; transition: 0.2s; }
+
+    /* Search Bar Style */
+    .search-container { position: relative; max-width: 400px; }
+    .search-input { padding: 10px 15px 10px 45px; border-radius: 10px; border: 1px solid #e2e8f0; width: 100%; font-size: 0.9rem; transition: 0.3s; background-color: #fff; }
+    .search-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+    .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; z-index: 5; }
+
+    /* Custom Autocomplete */
+    .ui-autocomplete { border-radius: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; padding: 8px 0; z-index: 9999 !important; }
+    .ui-menu-item-wrapper { padding: 10px 20px !important; font-size: 0.9rem; }
+
+    .btn-erp { padding: 10px 20px; font-weight: 600; border-radius: 10px; font-size: 0.9rem; border: none; transition: 0.3s; display: inline-flex; align-items: center; text-decoration: none; }
+    .btn-erp-primary { background: #0f172a; color: #fff; }
+    .btn-erp-primary:hover { background: #334155; color: #fff; transform: translateY(-1px); }
+
+    .btn-action { width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: #64748b; background: #fff; border: 1px solid #e2e8f0; transition: 0.2s; }
+    .btn-action:hover.edit { background: #eff6ff; color: #2563eb; border-color: #2563eb; }
+    .btn-action:hover.delete { background: #fef2f2; color: #ef4444; border-color: #ef4444; }
+    .btn-action:hover.add { background: #f0fdf4; color: #16a34a; border-color: #16a34a; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold m-0" style="color: #0f172a; font-size: 1.6rem;">Quản lý Sản phẩm & Kho hàng</h3>
+        <p class="text-danger small mt-1 mb-0"><i>Lưu ý: Hệ thống sẽ tự động cập nhật ngay lập tức khi thay đổi.</i></p>
+    </div>
+
+    <div class="d-flex gap-3 align-items-center">
+        <form method="GET" action="{% url 'store:manage_products' %}" id="search-form" class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" name="search" id="product-search" class="search-input shadow-sm"
+                   placeholder="Tìm tên SP hoặc danh mục..." value="{{ request.GET.search }}" autocomplete="off">
+        </form>
+
+        <a href="{% url 'store:add_product' %}" class="btn-erp btn-erp-primary shadow-sm">
+            <i class="fas fa-plus me-2"></i>Thêm Sản phẩm
         </a>
     </div>
+</div>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th class="text-center">ID</th>
-                        <th>Hình ảnh</th>
-                        <th>Tên sản phẩm</th>
-                        <th>Giá bán</th>
-                        <th>Danh mục</th>
-                        <th class="text-center">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr>
-                        <td class="text-center fw-bold">#{{ product.id }}</td>
-                        <td>
+{% if request.GET.search %}
+    <div class="mb-3">
+        <a href="{% url 'store:manage_products' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="fas fa-undo me-1"></i> Làm mới danh sách
+        </a>
+    </div>
+{% endif %}
+
+<div class="erp-card">
+    <div class="table-responsive">
+        <table class="erp-table">
+            <thead>
+                <tr>
+                    <th class="ps-4" style="width: 80px;">ID</th>
+                    <th>Sản phẩm</th>
+                    <th>Giá nhập</th>
+                    <th>Giá bán</th>
+                    <th class="text-center">Tồn kho</th>
+                    <th>Danh mục</th>
+                    <th class="text-end pe-4">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td class="text-muted ps-4 fw-bold">#{{ product.id }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
                             {% if product.image %}
-                                <img src="{{ product.image.url }}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded border">
+                                <img src="{{ product.image.url }}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 8px;" class="me-3 border">
                             {% else %}
-                                <span class="text-muted small">No Image</span>
+                                <div class="bg-light border d-flex justify-content-center align-items-center me-3" style="width: 45px; height: 45px; border-radius: 8px;">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
                             {% endif %}
-                        </td>
-                        <td class="fw-bold">{{ product.name }}</td>
-                        <td class="text-danger fw-bold">{{ product.price }} đ</td>
-                        <td><span class="badge bg-secondary">{{ product.get_category_display }}</span></td>
-
-                        <td class="text-center">
-                            <a href="{% url 'edit_product' product.id %}" class="btn btn-primary btn-sm mx-1" title="Sửa">
-                                <i class="fas fa-edit"></i>
+                            <div>
+                                <div class="fw-bold" style="color: #0f172a;">{{ product.name }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="color: #64748b;">{{ product.import_price|default:0 }} đ</td>
+                    <td style="color: #0f172a; font-weight: 600;">{{ product.price }} đ</td>
+                    <td class="text-center">
+                        <span style="background: {% if product.stock > 0 %}#f0fdf4; color: #16a34a;{% else %}#fef2f2; color: #ef4444;{% endif %} padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">
+                            {{ product.stock|default:0 }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 500; padding: 6px 10px;">
+                            {{ product.get_category_display }}
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn-action add" data-bs-toggle="modal" data-bs-target="#restockModal{{ product.id }}" title="Nhập hàng nhanh">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <a href="{% url 'store:edit_product' product.id %}" class="btn-action edit text-decoration-none" title="Sửa">
+                                <i class="fas fa-pen"></i>
                             </a>
-
-                            <a href="{% url 'delete_product' product.id %}" class="btn btn-danger btn-sm mx-1" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này? Không thể khôi phục!');">
-                                <i class="fas fa-trash-alt"></i>
+                            <a href="{% url 'store:delete_product' product.id %}" class="btn-action delete text-decoration-none" title="Xóa" onclick="return confirm('Xóa sản phẩm này?');">
+                                <i class="fas fa-trash"></i>
                             </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-4">Chưa có sản phẩm nào.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <div class="modal fade" id="restockModal{{ product.id }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="border-radius: 15px; border: none;">
+                      <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold">Nhập hàng: {{ product.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <form method="POST" action="{% url 'store:manage_products' %}">
+                          {% csrf_token %}
+                          <input type="hidden" name="restock" value="1">
+                          <input type="hidden" name="product_id" value="{{ product.id }}">
+                          <div class="modal-body">
+                              <div class="mb-3">
+                                  <label class="form-label text-muted small mb-1">Tồn kho hiện tại</label>
+                                  <input type="text" class="form-control bg-light text-success fw-bold" value="{{ product.stock|default:0 }}" disabled>
+                              </div>
+                              <div class="mb-2">
+                                  <label class="form-label text-muted small mb-1">Số lượng hàng nhập thêm</label>
+                                  <input type="number" class="form-control" name="add_quantity" min="1" value="1" required>
+                              </div>
+                          </div>
+                          <div class="modal-footer border-top-0 pt-0">
+                            <button type="button" class="btn text-muted" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-erp-primary">Xác nhận nhập</button>
+                          </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="py-4 text-muted">
+                            <i class="fas fa-box-open fa-4x mb-3 opacity-25"></i>
+                            <p class="fs-5 mb-0">Không tìm thấy sản phẩm nào.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<script>
+    $(function() {
+        $("#product-search").autocomplete({
+            source: "{% url 'store:exercise_autocomplete' %}", // Tận dụng API search gợi ý đã tạo
+            minLength: 2,
+            select: function(event, ui) {
+                $("#product-search").val(ui.item.value);
+                $("#search-form").submit();
+            }
+        });
+    });
+</script>
 {% endblock %}

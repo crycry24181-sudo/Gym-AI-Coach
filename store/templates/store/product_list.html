@@ -2,50 +2,75 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-5">
-    <h1 class="text-center mb-5" style="font-weight: 900; text-transform: uppercase;">💊 Cửa hàng Thực phẩm Bổ sung</h1>
+<div class="container py-5" style="margin-top: 80px; min-height: 80vh;">
+    <h1 class="text-center mb-5" style="font-weight: 900; text-transform: uppercase; color: #333;">
+        💊 Cửa hàng Thực phẩm Bổ sung
+    </h1>
 
     {% for category_group in products_by_category %}
 
-        <div class="d-flex align-items-center mb-4 mt-5 border-bottom pb-2">
-            <h2 class="text-primary fw-bold text-uppercase m-0">
-                <i class="fas fa-layer-group me-2"></i> {{ category_group.category_name }}
+        <div id="danh-muc-{{ category_group.category_name|slugify }}" class="d-flex align-items-center mb-4 mt-5 border-bottom border-2 border-dark pb-2" style="scroll-margin-top: 120px;">
+            <h2 class="text-dark fw-bold text-uppercase m-0">
+                <i class="fas fa-layer-group me-2 text-warning"></i> {{ category_group.category_name }}
             </h2>
         </div>
 
-        <div class="row g-4">
-
+        <div class="row g-4 mb-5">
             {% for product in category_group.products %}
             <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0">
+                <div class="card h-100 shadow-sm border-0 product-card">
 
-                    <a href="{% url 'product_detail' product.pk %}" class="text-decoration-none text-dark">
+                    <a href="{% url 'store:product_detail' product.pk %}" class="text-decoration-none text-dark">
                         {% if product.image %}
-                            <img src="{{ product.image.url }}" class="card-img-top" style="height: 250px; object-fit: contain; padding: 20px;">
+                            <img src="{{ product.image.url }}" class="card-img-top bg-light" style="height: 250px; object-fit: contain; padding: 20px; border-radius: 15px 15px 0 0;">
                         {% else %}
-                            <div style="height: 250px; background: #eee; display: flex; align-items: center; justify-content: center;">Chưa có ảnh</div>
+                            <div style="height: 250px; background: #eee; display: flex; align-items: center; justify-content: center; border-radius: 15px 15px 0 0;">
+                                <span class="text-muted">Chưa có ảnh</span>
+                            </div>
                         {% endif %}
 
-                        <div class="card-body text-center">
-                            <h5 class="card-title fw-bold">{{ product.name }}</h5>
-                            <h4 class="text-danger fw-bold">{{ product.price }} đ</h4>
+                        <div class="card-body text-center d-flex flex-column justify-content-between">
+                            <h5 class="card-title fw-bold mb-3">{{ product.name }}</h5>
+                            <h4 class="text-danger fw-bold mb-0">{{ product.price }} đ</h4>
                         </div>
                     </a>
 
-                    <div class="card-footer bg-white border-0">
-                        <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-dark w-100">
-                            <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
+                    <div class="card-footer bg-white border-0 pt-0 pb-3 px-3">
+                        <a href="{% url 'store:add_to_cart' product.pk %}" class="btn btn-dark w-100 fw-bold rounded-pill shadow-sm btn-cart">
+                            <i class="fas fa-shopping-cart me-1"></i> Thêm vào giỏ
                         </a>
                     </div>
 
                 </div>
             </div>
-            {% endfor %} </div>
-
-    {% empty %}
-        <div class="text-center py-5">
-            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Chưa có sản phẩm nào được bày bán.</p>
+            {% endfor %}
         </div>
-    {% endfor %} </div>
+
+        {% empty %}
+        <div class="text-center py-5 my-5 bg-white shadow-sm rounded-4">
+            <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+            <h4 class="fw-bold text-dark">Gian hàng đang trống</h4>
+            <p class="text-muted fs-5 mb-0">Chưa có sản phẩm nào được bày bán. Vui lòng quay lại sau!</p>
+        </div>
+    {% endfor %}
+</div>
+
+<style>
+    /* Hiệu ứng nổi lên khi di chuột vào sản phẩm */
+    .product-card {
+        border-radius: 15px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+    /* Đổi màu nút thêm vào giỏ khi hover */
+    .btn-cart:hover {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+        border-color: #ffc107 !important;
+        transition: all 0.3s ease;
+    }
+</style>
 {% endblock %}

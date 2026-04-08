@@ -1,95 +1,134 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-5" style="margin-top: 80px; min-height: 80vh;">
 
-    <a href="{% url 'store' %}" class="btn btn-outline-secondary mb-4 btn-sm">
-        <i class="fas fa-arrow-left"></i> Quay lại cửa hàng
+    <a href="{% url 'store:store' %}" class="btn btn-outline-secondary mb-4 btn-sm fw-bold shadow-sm" style="border-radius: 8px;">
+        <i class="fas fa-arrow-left me-1"></i> Quay lại cửa hàng
     </a>
 
-    <div class="row">
+    <div class="row mb-5">
         <div class="col-md-6 mb-4">
-            <div class="card mb-3 shadow-sm border-0">
+            <div class="card mb-3 shadow-sm border-0 rounded-4 overflow-hidden bg-white">
                 {% if product.image %}
-                    <img src="{{ product.image.url }}" class="card-img-top p-3" id="mainImage" style="height: 400px; object-fit: contain;">
+                    <img src="{{ product.image.url }}" class="card-img-top p-4" id="mainImage" style="height: 450px; object-fit: contain;">
                 {% else %}
-                    <div style="height: 400px; background: #eee; display: flex; align-items: center; justify-content: center;">
-                        Chưa có ảnh
+                    <div style="height: 450px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-muted"><i class="fas fa-image fa-3x mb-2 d-block text-center"></i>Chưa có ảnh</span>
                     </div>
                 {% endif %}
             </div>
 
-            <div class="d-flex gap-2 overflow-auto pb-2">
+            <div class="d-flex gap-2 overflow-auto pb-2 custom-scrollbar">
                 {% if product.image %}
-                    <img src="{{ product.image.url }}" onclick="changeImage(this)" class="img-thumbnail border-primary" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; opacity: 1;">
+                    <img src="{{ product.image.url }}" onclick="changeImage(this)" class="img-thumbnail border-danger shadow-sm" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; opacity: 1; border-width: 2px;">
                 {% endif %}
 
                 {% for gallery_item in product.gallery.all %}
-                    <img src="{{ gallery_item.image.url }}" onclick="changeImage(this)" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; opacity: 0.7;">
+                    <img src="{{ gallery_item.image.url }}" onclick="changeImage(this)" class="img-thumbnail shadow-sm" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; opacity: 0.6; border-width: 2px;">
                 {% endfor %}
             </div>
         </div>
 
-        <div class="col-md-6">
-            <h2 class="fw-bold text-uppercase">{{ product.name }}</h2>
-            <p class="text-muted">Danh mục: <span class="badge bg-info text-dark">{{ product.get_category_display }}</span></p>
+        <div class="col-md-6 ps-md-5">
+            <h1 class="fw-bold text-uppercase text-dark mb-2" style="font-size: 2.2rem; letter-spacing: -0.5px;">{{ product.name }}</h1>
+            <p class="text-muted mb-4 fs-5">
+                Danh mục: <span class="badge bg-danger px-3 py-2 ms-1 rounded-pill">{{ product.get_category_display }}</span>
+            </p>
 
-            <h3 class="text-danger fw-bold my-3 display-6">{{ product.price }} đ</h3>
+            <div class="p-4 bg-white rounded-4 mb-4 shadow-sm border-start border-danger border-5">
+                <small class="text-muted d-block mb-1 fw-bold text-uppercase">Giá bán lẻ:</small>
+                <h2 class="text-danger fw-bold m-0 display-5">{{ product.price|intcomma }} đ</h2>
+            </div>
 
-            <div class="d-grid gap-2 mb-4">
-                <a href="{% url 'add_to_cart' product.pk %}?buy_now=true" class="btn btn-danger btn-lg fw-bold shadow-sm py-3">
-                    <i class="fas fa-bolt me-2"></i> MUA NGAY
+            <div class="d-grid gap-3 mb-4">
+                <a href="{% url 'store:add_to_cart' product.pk %}?buy_now=true" class="btn btn-danger btn-lg fw-bold shadow-sm py-3 text-uppercase scale-hover" style="letter-spacing: 1px; border-radius: 12px;">
+                    <i class="fas fa-bolt me-2"></i> MUA NGAY (Giao nhanh 2h)
                 </a>
 
-                <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-outline-dark btn-lg py-3">
-                    <i class="fas fa-shopping-cart me-2"></i> THÊM VÀO GIỎ HÀNG
+                <a href="{% url 'store:add_to_cart' product.pk %}" class="btn btn-dark btn-lg py-3 fw-bold text-uppercase shadow-sm scale-hover" style="letter-spacing: 1px; border-radius: 12px;">
+                    <i class="fas fa-cart-plus me-2"></i> THÊM VÀO GIỎ HÀNG
                 </a>
             </div>
 
-            <div class="card card-body bg-light border-0 shadow-sm">
-                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="fas fa-info-circle"></i> Mô tả sản phẩm:</h5>
-                <p style="white-space: pre-line; color: #555; line-height: 1.6;">{{ product.description }}</p>
+            <div class="row g-2 text-center">
+                <div class="col-4">
+                    <div class="p-2 border rounded-3 bg-light"><i class="fas fa-shield-alt text-success d-block mb-1"></i><small>Chính hãng</small></div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 border rounded-3 bg-light"><i class="fas fa-truck text-primary d-block mb-1"></i><small>Freeship</small></div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 border rounded-3 bg-light"><i class="fas fa-sync text-warning d-block mb-1"></i><small>Đổi trả 7 ngày</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+                <div class="card-header bg-white border-bottom pt-4 pb-2 px-4 px-md-5">
+                    <h4 class="fw-bold mb-0 text-uppercase d-flex align-items-center" style="color: #333;">
+                        <span class="bg-danger me-3" style="width: 5px; height: 25px; display: inline-block; border-radius: 10px;"></span>
+                        <i class="fas fa-info-circle text-danger me-2"></i> Chi tiết & Mô tả sản phẩm
+                    </h4>
+                </div>
+
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <div class="product-description-content text-justify">
+                        {{ product.description|linebreaks|safe }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Hàm đổi ảnh khi bấm vào thumbnail
     function changeImage(element) {
-        // 1. Đổi ảnh chính
         var mainImg = document.getElementById('mainImage');
-        mainImg.src = element.src;
-
-        // 2. Hiệu ứng làm mờ nhẹ để tạo cảm giác chuyển ảnh
         mainImg.style.opacity = 0;
-        setTimeout(function(){
-            mainImg.style.opacity = 1;
-        }, 100);
 
-        // 3. Reset viền các ảnh nhỏ
+        setTimeout(function(){
+            mainImg.src = element.src;
+            mainImg.style.opacity = 1;
+        }, 150);
+
         var thumbnails = document.querySelectorAll('.img-thumbnail');
         thumbnails.forEach(function(img) {
-            img.classList.remove('border-primary'); // Bỏ viền xanh
-            img.style.opacity = 0.7; // Làm mờ đi
+            img.classList.remove('border-danger');
+            img.style.opacity = 0.6;
         });
 
-        // 4. Highlight ảnh vừa bấm
-        element.classList.add('border-primary'); // Thêm viền xanh
-        element.style.opacity = 1; // Làm rõ lên
+        element.classList.add('border-danger');
+        element.style.opacity = 1;
     }
 </script>
 
 <style>
-    /* Hiệu ứng chuyển động mượt cho ảnh chính */
-    #mainImage {
-        transition: opacity 0.3s ease-in-out;
+    /* Căn lề mô tả đều 2 bên cho chuyên nghiệp */
+    .product-description-content {
+        color: #444;
+        line-height: 1.85;
+        font-size: 1.1rem;
+        text-align: justify; /* CHỮ TỪ MÉP TRÁI ĐẾN MÉP PHẢI */
     }
-    /* Hiệu ứng hover cho ảnh nhỏ */
-    .img-thumbnail:hover {
-        opacity: 1 !important;
-        border-color: #0d6efd;
+
+    .product-description-content p {
+        margin-bottom: 1.5rem;
     }
+
+    #mainImage { transition: opacity 0.3s ease-in-out; }
+
+    .img-thumbnail { transition: all 0.2s ease; border-radius: 10px !important; }
+    .img-thumbnail:hover { opacity: 1 !important; transform: translateY(-3px); }
+
+    .scale-hover:hover { transform: scale(1.02); transition: 0.3s; }
+
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #d3232a; border-radius: 10px; }
 </style>
 {% endblock %}

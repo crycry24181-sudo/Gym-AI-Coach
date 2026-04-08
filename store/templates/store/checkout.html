@@ -1,89 +1,236 @@
 {% extends 'core/base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container py-5">
-    <h1 class="text-center mb-4">💳 THANH TOÁN ĐƠN HÀNG</h1>
+<div class="container py-5" style="background-color: #f8f9fa; min-height: 80vh;">
+    <h2 class="fw-bold mb-4 text-uppercase text-center" style="letter-spacing: 1px; color: #111;">
+        <i class="fas fa-shopping-bag text-danger me-2"></i> Thanh Toán Đơn Hàng
+    </h2>
 
-    <form method="POST">
+    <form method="POST" id="checkout-form">
         {% csrf_token %}
-        <div class="row">
-            <div class="col-md-7">
-                <div class="card p-4 mb-4">
-                    <h4 class="mb-3">📍 Thông tin giao hàng</h4>
-                    <div class="mb-3">
-                        <label>Họ và tên</label>
-                        <input type="text" name="full_name" class="form-control" value="{{ user_info.full_name }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Email</label>
-                        <input type="email" name="email" class="form-control" value="{{ user_info.email }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Số điện thoại</label>
-                        <input type="text" name="phone" class="form-control" value="{{ user_info.phone }}" required placeholder="Nhập SĐT để shipper gọi">
-                    </div>
-                    <div class="mb-3">
-                        <label>Địa chỉ nhận hàng</label>
-                        <textarea name="address" class="form-control" rows="3" required placeholder="Số nhà, đường, phường, quận...">{{ user_info.address }}</textarea>
-                    </div>
-                </div>
+        <div class="row g-4 justify-content-center">
 
-                <div class="card p-4">
-                    <h4 class="mb-3">💳 Phương thức thanh toán</h4>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="payment_method" value="COD" id="cod" checked>
-                        <label class="form-check-label" for="cod">Thanh toán khi nhận hàng (COD)</label>
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+                    <div class="card-header bg-white border-bottom pt-4 pb-3 px-4">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-map-marker-alt text-danger me-2 fs-4"></i> Thông tin giao hàng</h5>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="payment_method" value="BANK" id="bank">
-                        <label class="form-check-label" for="bank">Chuyển khoản ngân hàng (QR Code)</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-5">
-                <div class="card p-4 bg-light">
-                    <h4 class="mb-3">📦 Đơn hàng của bạn</h4>
-
-                    <ul class="list-group mb-3">
-                        {% for item in cart.items.all %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center lh-sm">
-                            <div style="flex: 1;">
-                                <h6 class="my-0 text-dark fw-bold">{{ item.product.name }}</h6>
-
-                                <div class="btn-group btn-group-sm mt-2" role="group">
-                                    <a href="{% url 'update_cart_item' item.id 'decrease' %}?next=checkout" class="btn btn-outline-secondary px-2" style="font-size: 0.8rem;">
-                                        <i class="fas fa-minus"></i>
-                                    </a>
-
-                                    <span class="btn btn-light disabled text-dark border" style="width: 35px; font-weight: bold; font-size: 0.8rem;">
-                                        {{ item.quantity }}
-                                    </span>
-
-                                    <a href="{% url 'update_cart_item' item.id 'increase' %}?next=checkout" class="btn btn-outline-secondary px-2" style="font-size: 0.8rem;">
-                                        <i class="fas fa-plus"></i>
-                                    </a>
-                                </div>
+                    <div class="card-body p-4 bg-white">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary small">Họ và tên</label>
+                            <input type="text" name="full_name" class="form-control form-control-lg bg-light border-0" value="{{ user_info.full_name }}" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label class="form-label fw-semibold text-secondary small">Email</label>
+                                <input type="email" name="email" class="form-control form-control-lg bg-light border-0" value="{{ user_info.email }}" required>
                             </div>
-
-                            <span class="text-danger fw-bold ms-3">{{ item.total_price }} đ</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Mã giảm giá">
-                        <button type="button" class="btn btn-secondary">Áp dụng</button>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-secondary small">Số điện thoại</label>
+                                <input type="text" name="phone" class="form-control form-control-lg bg-light border-0" value="{{ user_info.phone }}" required placeholder="Nhập SĐT để shipper gọi">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold text-secondary small">Địa chỉ nhận hàng chi tiết</label>
+                            <textarea name="address" class="form-control bg-light border-0" rows="3" required placeholder="Số nhà, đường, phường, quận...">{{ user_info.address }}</textarea>
+                        </div>
                     </div>
+                </div>
 
-                    <h3 class="d-flex justify-content-between">
-                        <span>Tổng tiền:</span>
-                        <strong class="text-danger">{{ cart.total_price }} đ</strong>
-                    </h3>
-
-                    <button type="submit" class="btn btn-primary w-100 btn-lg mt-3">XÁC NHẬN THANH TOÁN</button>
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="card-header bg-white border-bottom pt-4 pb-3 px-4">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-credit-card text-primary me-2 fs-4"></i> Phương thức thanh toán</h5>
+                    </div>
+                    <div class="card-body p-4 bg-white">
+                        <div class="form-check mb-3 p-3 border rounded bg-light" style="cursor: pointer;">
+                            <input class="form-check-input ms-1" type="radio" name="payment_method" value="COD" id="cod" checked style="cursor: pointer;">
+                            <label class="form-check-label fw-bold ms-2 w-100" for="cod" style="cursor: pointer;">
+                                Thanh toán khi nhận hàng (COD)
+                            </label>
+                        </div>
+                        <div class="form-check p-3 border rounded bg-light" style="cursor: pointer;">
+                            <input class="form-check-input ms-1" type="radio" name="payment_method" value="BANK" id="bank" style="cursor: pointer;">
+                            <label class="form-check-label fw-bold ms-2 w-100" for="bank" style="cursor: pointer;">
+                                Chuyển khoản ngân hàng (QR Code)
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-lg rounded-4 sticky-top" style="top: 100px;">
+                    <div class="card-header bg-dark text-white border-bottom-0 pt-4 pb-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-box-open text-warning me-2"></i> Đơn hàng</h5>
+                        <span class="badge bg-warning text-dark rounded-pill">{{ cart.items.count }} sản phẩm</span>
+                    </div>
+                    <div class="card-body p-4 bg-white">
+
+                        <div class="mb-3" style="max-height: 280px; overflow-y: auto; overflow-x: hidden;">
+                            {% for item in cart.items.all %}
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom pe-2">
+                                <div style="flex: 1;">
+                                    <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.95rem;">{{ item.product.name }}</h6>
+
+                                    <div class="btn-group btn-group-sm shadow-sm" role="group">
+                                        <a href="{% url 'store:update_cart_item' item.id 'decrease' %}?next=checkout" class="btn btn-outline-secondary px-2">
+                                            <i class="fas fa-minus" style="font-size: 0.7rem;"></i>
+                                        </a>
+                                        <span class="btn btn-light disabled text-dark border-top border-bottom px-3" style="font-weight: 800; font-size: 0.85rem;">
+                                            {{ item.quantity }}
+                                        </span>
+                                        <a href="{% url 'store:update_cart_item' item.id 'increase' %}?next=checkout" class="btn btn-outline-secondary px-2">
+                                            <i class="fas fa-plus" style="font-size: 0.7rem;"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <span class="fw-bold text-danger ms-3 fs-6">{{ item.total_price }} đ</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="voucher-section py-3 mb-3 border-bottom border-top">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-ticket-alt text-danger me-2"></i> Áp dụng ưu đãi</h6>
+
+                            <div id="available-vouchers" class="d-flex flex-column gap-2">
+                                </div>
+
+                            <input type="hidden" name="applied_voucher_code" id="applied-voucher-code" value="">
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted fw-semibold">Tạm tính:</span>
+                            <span class="fw-bold text-dark" id="subtotal-display" data-value="{{ cart.total_price }}">{{ cart.total_price }} đ</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-3 text-success d-none" id="discount-row">
+                            <span class="fw-bold"><i class="fas fa-check-circle me-1"></i> Đã giảm (Voucher):</span>
+                            <span class="fw-bold" id="discount-display">- 0 đ</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <span class="fs-5 fw-bold text-dark">TỔNG CỘNG:</span>
+                            <span class="fs-2 fw-bold text-danger" id="final-total-display">{{ cart.total_price }} đ</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100 py-3 rounded-pill fw-bold fs-5 shadow mt-4 btn-checkout" style="letter-spacing: 1px; transition: 0.3s;">
+                            XÁC NHẬN THANH TOÁN
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Kho dữ liệu Mã Giảm Giá (Giống y chang với trang chủ)
+    const VOUCHER_DB = {
+        'NEWBIE50': { type: 'fixed', value: 50000, label: 'Giảm 50.000đ cho đơn hàng' },
+        'FLASH30': { type: 'fixed', value: 30000, label: 'Giảm thẳng 30.000đ siêu tốc' }
+    };
+
+    // 2. Lấy danh sách mã khách ĐÃ LƯU từ localStorage
+    let savedVouchers = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
+    let voucherContainer = document.getElementById('available-vouchers');
+
+    // 3. Lấy TỔNG TIỀN GỐC từ Django render ra
+    let rawBaseText = document.getElementById('subtotal-display').getAttribute('data-value');
+    // Làm sạch chuỗi (xóa dấu phẩy, dấu chấm) để lấy số tính toán
+    let baseTotal = parseFloat(rawBaseText.replace(/,/g, '').replace(/\./g, '').replace(/[^0-9.-]+/g,"")) || 0;
+    let currentDiscount = 0;
+
+    // Hàm format tiền tệ (Ví dụ: 1000000 -> 1.000.000 đ)
+    const formatMoney = (num) => num.toLocaleString('vi-VN') + " đ";
+
+    // 4. VẼ VOUCHER RA MÀN HÌNH
+    if (savedVouchers.length === 0) {
+        voucherContainer.innerHTML = `
+            <div class="text-center p-3 bg-light rounded border border-dashed">
+                <i class="fas fa-box-open text-muted mb-2 fs-3"></i>
+                <p class="text-muted small mb-0">Bạn chưa lưu mã ưu đãi nào.</p>
+            </div>`;
+    } else {
+        savedVouchers.forEach(code => {
+            if (VOUCHER_DB[code]) {
+                let v = VOUCHER_DB[code];
+                let html = `
+                <div class="border rounded p-2 d-flex justify-content-between align-items-center bg-light voucher-item" style="cursor:pointer; transition: 0.2s;" onclick="applyDiscount('${code}', ${v.value})">
+                    <div>
+                        <strong class="text-danger d-block">${code}</strong>
+                        <small class="text-muted">${v.label}</small>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input voucher-radio" type="radio" name="voucher_selection" id="radio-${code}" style="pointer-events: none;">
+                    </div>
+                </div>`;
+                voucherContainer.insertAdjacentHTML('beforeend', html);
+            }
+        });
+    }
+
+    // 5. HÀM ÁP DỤNG MÃ KHI KHÁCH CLICK
+    window.applyDiscount = function(code, discountValue) {
+        // Reset giao diện các mã khác
+        document.querySelectorAll('.voucher-radio').forEach(radio => radio.checked = false);
+        document.querySelectorAll('.voucher-item').forEach(item => {
+            item.classList.remove('border-danger', 'bg-white');
+            item.classList.add('bg-light');
+        });
+
+        // Highlight mã đang chọn
+        let selectedItem = document.getElementById(`radio-${code}`).closest('.voucher-item');
+        document.getElementById(`radio-${code}`).checked = true;
+        selectedItem.classList.replace('bg-light', 'bg-white');
+        selectedItem.classList.add('border-danger', 'shadow-sm');
+
+        // Tính toán lại tiền
+        currentDiscount = discountValue;
+        let finalTotal = baseTotal - currentDiscount;
+        if (finalTotal < 0) finalTotal = 0;
+
+        // Cập nhật lên màn hình
+        document.getElementById('discount-row').classList.remove('d-none');
+        document.getElementById('discount-display').innerText = "- " + formatMoney(currentDiscount);
+        document.getElementById('final-total-display').innerText = formatMoney(finalTotal);
+
+        // Gắn mã vào form ẩn để gửi về Backend xử lý đơn
+        document.getElementById('applied-voucher-code').value = code;
+    };
+
+    // 6. THU HỒI MÃ SAU KHI ĐẶT HÀNG THÀNH CÔNG
+    document.getElementById('checkout-form').addEventListener('submit', function(e) {
+        let usedCode = document.getElementById('applied-voucher-code').value;
+        if (usedCode) {
+            // Xóa mã vừa xài ra khỏi kho lưu trữ localStorage
+            let newSaved = savedVouchers.filter(v => v !== usedCode);
+            localStorage.setItem('gym_vouchers', JSON.stringify(newSaved));
+        }
+    });
+});
+</script>
+
+<style>
+    /* CSS trang trí nhẹ cho form focus và nút */
+    .form-control:focus, .form-check-input:focus {
+        box-shadow: none;
+        border: 1px solid #d3232a !important;
+    }
+    .form-check-input:checked {
+        background-color: #d3232a;
+        border-color: #d3232a;
+    }
+    .btn-checkout:hover {
+        background-color: #b01a20;
+        transform: translateY(-2px);
+    }
+    /* Thanh cuộn nhỏ gọn cho giỏ hàng */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+</style>
 {% endblock %}

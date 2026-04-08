@@ -1,11 +1,16 @@
-{% extends 'core/base.html' %}
+{% extends 'core/admin_base.html' %}
 {% load static %}
 
-{% block content %}
-<div class="container-fluid py-5 px-4">
-    <h2 class="text-center fw-bold mb-4 text-uppercase text-primary">
-        <i class="fas fa-tasks"></i> Trang Quản Lý Đơn Hàng
-    </h2>
+{% block admin_content %}
+<div class="container-fluid py-5 px-4" style="margin-top: 70px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-uppercase text-primary m-0">
+            <i class="fas fa-tasks"></i> Trang Quản Lý Đơn Hàng
+        </h2>
+        <a href="{% url 'store:manage_products' %}" class="btn btn-outline-primary fw-bold shadow-sm">
+            <i class="fas fa-boxes me-1"></i> Quản lý Sản phẩm
+        </a>
+    </div>
 
     <div class="row mb-4">
         <div class="col-md-4 mb-3">
@@ -40,9 +45,11 @@
 
             <div class="d-flex align-items-center">
                 <span class="me-2 small fw-bold">Chọn tháng:</span>
-                <select id="monthSelector" class="form-select form-select-sm shadow-sm" style="width: 140px;">
+                <select id="monthSelector" class="form-select form-select-sm shadow-sm" style="width: 140px;" onchange="window.location.href='?month=' + this.value">
                     {% for m in unique_months %}
-                    <option value="{{ m }}">{{ m }}</option>
+                        <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
+                            {{ m }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
@@ -88,7 +95,10 @@
                             <td>
                                 <div class="small">
                                     {% for item in order.items.all %}
-                                        <div class="mb-1">• {{ item.product.name }} <span class="badge bg-light text-dark">x{{ item.quantity }}</span></div>
+                                        <div class="mb-1">
+                                            • <a href="{% url 'store:product_detail' item.product.id %}" class="text-decoration-none text-dark fw-bold">{{ item.product.name }}</a>
+                                            <span class="badge bg-light text-dark border">x{{ item.quantity }}</span>
+                                        </div>
                                     {% endfor %}
                                 </div>
                             </td>
@@ -96,7 +106,7 @@
                                 {{ order.total_amount|floatformat:0 }}đ
                             </td>
                             <td>
-                                <form id="order-form-{{ order.id }}" method="POST">
+                                <form id="order-form-{{ order.id }}" action="{% url 'store:manage_orders' %}" method="POST">
                                     {% csrf_token %}
                                     <input type="hidden" name="order_id" value="{{ order.id }}">
                                     <div class="mb-2">
@@ -123,7 +133,7 @@
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6" class="text-center py-5 text-muted">Hệ thống chưa có đơn hàng nào.</td></tr>
+                        <tr><td colspan="6" class="text-center py-5 text-muted fs-5">Hệ thống chưa có đơn hàng nào.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -135,50 +145,58 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Nhận dữ liệu JSON từ Django gửi qua
     const chartData = {{ chart_data_json|safe }};
     const canvasCtx = document.getElementById('revenueChart').getContext('2d');
     let lineChart;
 
     function renderRevenueChart(selectedMonth) {
-        // 1. Lọc dữ liệu theo tháng được chọn từ Dropdown
-        const filteredData = chartData.filter(d => d.month === selectedMonth);
+        // 1. Tách tháng và năm từ Dropdown
+        const parts = selectedMonth.split('/');
+        const month = parseInt(parts[0], 10);
+        const year = parseInt(parts[1], 10);
 
-        // 2. Gom nhóm tổng tiền theo ngày (đề phòng một ngày có nhiều đơn)
+        // 2. Lấy số ngày trong tháng đó
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        const filteredData = chartData.filter(d => d.month === selectedMonth);
         const daySummary = {};
         let monthGrandTotal = 0;
 
+        // 3. Gom nhóm tiền theo ngày
         filteredData.forEach(d => {
-            const dayNum = d.date.split('-')[2]; // Cắt lấy phần Ngày từ chuỗi "YYYY-MM-DD"
+            const dayNum = parseInt(d.date.split('-')[2], 10);
             daySummary[dayNum] = (daySummary[dayNum] || 0) + d.amount;
             monthGrandTotal += d.amount;
         });
 
-        // 3. Chuẩn bị Labels (Ngày) và Data (Tiền)
-        const sortedDays = Object.keys(daySummary).sort((a, b) => a - b);
-        const dataPoints = sortedDays.map(day => daySummary[day]);
+        // 4. Xây dựng trục X (tất cả các ngày) và trục Y (doanh thu tương ứng hoặc 0)
+        const labels = [];
+        const dataPoints = [];
 
-        // 4. Cập nhật số tiền hiển thị trên đầu biểu đồ
+        for (let i = 1; i <= daysInMonth; i++) {
+            labels.push('Ngày ' + i);
+            dataPoints.push(daySummary[i] || 0); // Nếu ngày i có tiền thì điền, không thì là 0
+        }
+
         document.getElementById('monthTotalDisplay').innerText = monthGrandTotal.toLocaleString('vi-VN') + ' VNĐ';
 
-        // 5. Vẽ/Cập nhật biểu đồ đường
         if (lineChart) { lineChart.destroy(); }
 
         lineChart = new Chart(canvasCtx, {
             type: 'line',
             data: {
-                labels: sortedDays.map(day => 'Ngày ' + day),
+                labels: labels,
                 datasets: [{
                     label: 'Doanh thu (VNĐ)',
                     data: dataPoints,
                     borderColor: '#0d6efd',
                     backgroundColor: 'rgba(13, 110, 253, 0.1)',
                     borderWidth: 3,
-                    tension: 0.4, // Tạo độ cong cho biểu đồ đường
+                    tension: 0.2, // Chỉnh độ cong nét gãy dứt khoát hơn khi rớt xuống 0
                     fill: true,
-                    pointRadius: 5,
+                    pointRadius: 4,
                     pointBackgroundColor: '#0d6efd',
-                    pointHoverRadius: 8
+                    pointHoverRadius: 6
                 }]
             },
             options: {
@@ -204,12 +222,7 @@
         });
     }
 
-    // Lắng nghe sự kiện đổi tháng
-    document.getElementById('monthSelector').addEventListener('change', function() {
-        renderRevenueChart(this.value);
-    });
-
-    // Tự động vẽ lần đầu cho tháng mới nhất có trong danh sách
+    // Tự động render biểu đồ cho tháng đang được chọn (selected_month)
     const firstMonth = document.getElementById('monthSelector').value;
     if (firstMonth) {
         renderRevenueChart(firstMonth);
