@@ -11,9 +11,12 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Tui khuyên nên để: DEBUG = os.getenv('DEBUG', 'True') == 'True'
+# Nhưng hiện tại cứ để True để ông dễ test, lúc nào chạy ổn thì sửa trên Render sau.
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -23,7 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',# Bắt buộc để dùng |intcomma
+    'django.contrib.humanize', # Bắt buộc để dùng |intcomma
 
     # --- CÁC APP CỦA DỰ ÁN ---
     'core',
@@ -36,7 +39,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # <-- THÊM DÒNG NÀY ĐỂ QUẢN LÝ FILE TĨNH (CSS, JS) TRÊN SERVER
+    'whitenoise.middleware.WhiteNoiseMiddleware', # QUAN TRỌNG: Quản lý file tĩnh trên server
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -50,7 +53,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], # <-- ĐÃ SỬA: CHỈ ĐƯỜNG CHO DJANGO TÌM FILE GIAO DIỆN
+        'DIRS': [BASE_DIR / 'templates'], # Đã sửa đường dẫn template
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -64,6 +67,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+
 # --- CẤU HÌNH MONGODB (BẢO MẬT) ---
 DATABASES = {
     'default': {
@@ -71,11 +75,11 @@ DATABASES = {
         'NAME': 'GymStoreDB',
         'ENFORCE_SCHEMA': False,
         'CLIENT': {
-            # Lấy link host từ file .env để không bị lộ trên GitHub
             'host': os.getenv('DATABASE_URL')
         }
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -85,22 +89,30 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+
 # Internationalization
 LANGUAGE_CODE = 'vi'
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
 USE_I18N = True
-USE_L10N = True  # Quan trọng: Bật để nhận diện định dạng Việt Nam
+USE_L10N = True
 USE_TZ = True
-USE_THOUSAND_SEPARATOR = True # Quan trọng: Để hiện dấu chấm 1.650.000
+USE_THOUSAND_SEPARATOR = True
 
-# Static files (CSS, JavaScript, Images)
+
+# --- CẤU HÌNH FILE TĨNH (STATIC) & ẢNH (MEDIA) ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Media files (Ảnh sản phẩm, Video bài tập)
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT ĐỂ FIX LỖI RENDER:
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Tối ưu nén file tĩnh để web chạy nhanh hơn
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 # --- CẤU HÌNH EMAIL ---
 EMAIL_BACKEND = 'core.email_backend.FixedEmailBackend'
@@ -112,8 +124,9 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev']
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev', 'https://*.onrender.com']
 
-# settings.py
+
+# settings.py - DIFY AI
 DIFY_API_KEY = os.getenv("DIFY_API_KEY")
 DIFY_API_URL = os.getenv("DIFY_API_URL")
