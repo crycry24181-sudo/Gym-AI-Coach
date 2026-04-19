@@ -1,6 +1,10 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from django.http import JsonResponse
+from django.utils import timezone
+from .models import Coupon
+import json
 
 # Import Models
 from .models import Product, Exercise
@@ -50,3 +54,5 @@ def api_exercise_detail(request, pk):
 
     serializer = ExerciseSerializer(exercise)
     return Response(serializer.data)
+
+

@@ -56,6 +56,10 @@
                 <a href="{% url 'store:manage_exercises' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_exercises' %}active{% endif %}"><i class="fas fa-dumbbell"></i> Quản lý Bài tập</a>
                 <a href="{% url 'store:manage_customers' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_customers' %}active{% endif %}"><i class="fas fa-users"></i> Khách hàng</a>
 
+                <a href="{% url 'store:manage_vouchers' %}" class="erp-menu-item {% if request.resolver_match.url_name == 'manage_vouchers' %}active{% endif %}">
+                    <i class="fas fa-ticket-alt"></i> Mã giảm giá / Voucher
+                </a>
+
             {% else %}
                 {% for group in request.user.groups.all %}
                     {% if group.name == 'Kho' %}

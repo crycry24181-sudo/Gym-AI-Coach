@@ -3,7 +3,7 @@
 
 {% block css %}
 <style>
-    /* ================= KHU VỰC HERO BANNERS (Layout 1 To - 2 Nhỏ) ================= */
+    /* ================= KHU VỰC HERO BANNERS (GIỮ NGUYÊN BẢN GỐC) ================= */
     .hero-container { margin-top: 25px; margin-bottom: 40px; }
 
     /* Carousel (Lớn) - Trái */
@@ -34,6 +34,17 @@
     .muscle-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
     .muscle-card img { height: 180px; object-fit: cover; width: 100%; }
     .card-title { font-weight: 800; text-transform: uppercase; margin-bottom: 0; font-size: 1.05rem; }
+
+    /* FIX THANH CUỘN VÀ VÙNG CHỨA NÚT */
+    .voucher-action-container {
+        width: 85px;
+        display: flex;
+        justify-content: flex-end;
+        flex-shrink: 0;
+    }
+    /* Tùy chỉnh thanh cuộn cho đẹp */
+    .voucher-scroll-area::-webkit-scrollbar { width: 5px; }
+    .voucher-scroll-area::-webkit-scrollbar-thumb { background: #d3232a; border-radius: 10px; }
 </style>
 {% endblock %}
 
@@ -99,38 +110,35 @@
                             </a>
                         </div>
                     </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#sideBannerCarousel" data-bs-slide="prev" style="opacity: 0.5;">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#sideBannerCarousel" data-bs-slide="next" style="opacity: 0.5;">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    </button>
                 </div>
 
-                <div class="bg-white p-3 shadow-sm position-relative d-flex flex-column justify-content-center" style="border-radius: 12px; border: 2px dashed #d3232a; height: 202px;">
-                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger px-3 py-1" style="font-size: 0.8rem; z-index: 2;">
+                <div class="position-relative pt-2" style="height: 202px;">
+                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger px-3 py-1" style="font-size: 0.8rem; z-index: 10; border: 2px solid white;">
                         <i class="fas fa-gift me-1"></i> ƯU ĐÃI HÔM NAY
                     </span>
 
-                    <div class="mt-2">
-                        <div class="d-flex justify-content-between align-items-center p-2 mb-2 rounded bg-light border border-white" style="box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
-                            <div>
-                                <strong class="text-danger d-block mb-0" style="font-size: 0.95rem; letter-spacing: 0.5px;">NEWBIE50</strong>
-                                <small class="text-muted" style="font-size: 0.7rem;">Giảm 50K cho đơn từ 400K</small>
+                    <div class="bg-white p-3 shadow-sm voucher-scroll-area" style="border-radius: 12px; border: 2px dashed #d3232a; height: 100%; overflow-y: auto;">
+                        <div class="mt-2">
+                            {% for v in vouchers %}
+                            <div class="d-flex justify-content-between align-items-center p-2 mb-2 rounded bg-light border border-white" style="box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
+                                <div style="flex: 1;">
+                                    <strong class="text-danger d-block mb-0" style="font-size: 0.95rem; letter-spacing: 0.5px;">{{ v.code }}</strong>
+                                    <small class="text-muted" style="font-size: 0.7rem;">
+                                        {% if v.discount_type == 'FIXED' %}Giảm {{ v.val_display|floatformat:0 }}đ{% else %}Giảm {{ v.val_display|floatformat:0 }}%{% endif %} đơn từ {{ v.min_display|floatformat:0 }}đ
+                                    </small>
+                                </div>
+                                <div class="voucher-action-container" id="action-{{ v.code }}">
+                                    <button class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold btn-save-voucher"
+                                            data-code="{{ v.code }}"
+                                            onclick="saveVoucher(this, '{{ v.code }}')"
+                                            style="font-size: 0.75rem; width: 100%;">
+                                        Lưu mã
+                                    </button>
+                                </div>
                             </div>
-                            <button class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold btn-save-voucher" data-code="NEWBIE50" onclick="saveVoucher(this, 'NEWBIE50')" style="font-size: 0.75rem; min-width: 65px; transition: 0.3s;">
-                                Lưu mã
-                            </button>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light border border-white" style="box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
-                            <div>
-                                <strong class="text-danger d-block mb-0" style="font-size: 0.95rem; letter-spacing: 0.5px;">FLASH30</strong>
-                                <small class="text-muted" style="font-size: 0.7rem;">Giảm thẳng 30K siêu tốc</small>
-                            </div>
-                            <button class="btn btn-sm btn-outline-danger py-1 px-2 fw-bold btn-save-voucher" data-code="FLASH30" onclick="saveVoucher(this, 'FLASH30')" style="font-size: 0.75rem; min-width: 65px; transition: 0.3s;">
-                                Lưu mã
-                            </button>
+                            {% empty %}
+                            <div class="text-center py-4 text-muted small">Hiện chưa có ưu đãi mới.</div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -153,6 +161,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col">
                 <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/lung.png' %}" class="card-img-top" alt="Lưng Xô">
@@ -162,6 +171,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col">
                 <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/vai.jpg' %}" class="card-img-top" alt="Vai">
@@ -171,6 +181,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col">
                 <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/tay_truoc.jpg' %}" class="card-img-top" alt="Tay Trước">
@@ -180,6 +191,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col">
                 <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/tay_sau.jpg' %}" class="card-img-top" alt="Tay Sau">
@@ -189,6 +201,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col">
                 <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/bung.jpg' %}" class="card-img-top" alt="Bụng">
@@ -198,6 +211,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col">
                 <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/chan.jpg' %}" class="card-img-top" alt="Chân Mông">
@@ -207,6 +221,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col">
                 <div class="card muscle-card h-100 shadow-sm border-0">
                     <img src="{% static 'images/cardio.jpeg' %}" class="card-img-top" alt="Cardio">
@@ -220,39 +235,25 @@
     </div>
 
     <script>
-        // 1. Khi vừa load web, kiểm tra ngay xem khách đã từng lưu mã chưa
         document.addEventListener("DOMContentLoaded", function() {
             let savedVouchers = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
-
-            document.querySelectorAll('.btn-save-voucher').forEach(btn => {
-                let code = btn.getAttribute('data-code');
-                // Nếu mã đã nằm trong kho lưu trữ thì đổi trạng thái nút
+            document.querySelectorAll('.voucher-action-container').forEach(container => {
+                let code = container.id.replace('action-', '');
                 if (savedVouchers.includes(code)) {
-                    btn.innerText = "Đã lưu";
-                    btn.classList.remove('btn-outline-danger');
-                    btn.classList.add('btn-success', 'text-white', 'disabled');
-                    btn.disabled = true; // Khóa nút không cho bấm nữa
+                    container.innerHTML = '<span class="badge bg-success py-2" style="font-size: 0.75rem; width: 100%;">Đã lưu</span>';
                 }
             });
         });
 
-        // 2. Hành động khi khách bấm vào nút "Lưu mã"
-        function saveVoucher(btnElement, code) {
-            // Vẫn copy vào clipboard cho tiện lợi
-            navigator.clipboard.writeText(code);
-
+        function saveVoucher(btn, code) {
             let savedVouchers = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
-
-            // Nếu mã chưa được lưu thì tiến hành lưu
             if (!savedVouchers.includes(code)) {
                 savedVouchers.push(code);
                 localStorage.setItem('gym_vouchers', JSON.stringify(savedVouchers));
-
-                // Đổi giao diện nút sang Xanh (thành công) và khóa nút vĩnh viễn (cho đến khi mua hàng)
-                btnElement.innerText = "Đã lưu";
-                btnElement.classList.remove('btn-outline-danger');
-                btnElement.classList.add('btn-success', 'text-white', 'disabled');
-                btnElement.disabled = true;
+                let container = document.getElementById('action-' + code);
+                container.innerHTML = '<span class="badge bg-success py-2" style="font-size: 0.75rem; width: 100%;">Đã lưu</span>';
+                navigator.clipboard.writeText(code);
+                alert("Đã lưu mã " + code + " thành công!");
             }
         }
     </script>

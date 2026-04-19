@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # ================= SẢN PHẨM =================
 class Product(models.Model):
@@ -133,3 +134,39 @@ class Exercise(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.get_muscle_group_display()}"
+
+
+class Coupon(models.Model):
+    DISCOUNT_CHOICES = (
+        ('PERCENTAGE', 'Giảm theo phần trăm (%)'),
+        ('FIXED', 'Giảm theo số tiền cố định (VNĐ)'),
+    )
+
+    code = models.CharField(max_length=50, unique=True, verbose_name="Mã giảm giá")
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_CHOICES, default='FIXED',
+                                     verbose_name="Loại giảm giá")
+    value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Giá trị giảm")
+
+    # Các điều kiện
+    min_purchase = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Đơn hàng tối thiểu")
+    valid_from = models.DateTimeField(verbose_name="Ngày bắt đầu")
+    valid_to = models.DateTimeField(verbose_name="Ngày hết hạn")
+    active = models.BooleanField(default=True, verbose_name="Đang kích hoạt")
+
+    def __str__(self):
+        return f"{self.code} ({self.get_discount_type_display()})"
+
+    # --- ĐÂY LÀ 2 BIẾN ẢO DÙNG ĐỂ HIỂN THỊ HTML (TRỊ BỆNH MONGODB) ---
+    @property
+    def val_display(self):
+        # Dịch Decimal128 sang số Float thông thường
+        return float(str(self.value)) if self.value else 0
+
+    @property
+    def min_display(self):
+        return float(str(self.min_purchase)) if self.min_purchase else 0
+    # ------------------------------------------------------------------
+
+    class Meta:
+        verbose_name = "Mã giảm giá"
+        verbose_name_plural = "Quản lý Mã giảm giá"

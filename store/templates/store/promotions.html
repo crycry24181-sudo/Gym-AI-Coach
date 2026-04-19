@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="text-center fw-bold mb-4">DANH SÁCH ƯU ĐÃI</h2>
+    <div class="row g-4">
+        {% for v in vouchers %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm border-0 rounded-4 p-3 bg-white position-relative overflow-hidden" style="border-left: 5px solid #d3232a !important;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="text-danger fw-bold mb-1">{{ v.code }}</h4>
+                        <p class="text-muted small mb-0">
+                            {% if v.discount_type == 'FIXED' %}Giảm {{ v.val_display|floatformat:0 }}đ{% else %}Giảm {{ v.val_display|floatformat:0 }}%{% endif %}
+                        </p>
+                        <small>Đơn tối thiểu: {{ v.min_display|floatformat:0 }}đ</small>
+                    </div>
+                    <div id="action-{{ v.code }}">
+                        <button class="btn btn-danger btn-sm fw-bold px-3 btn-save-voucher"
+                                data-code="{{ v.code }}" onclick="saveVoucher(this, '{{ v.code }}')">
+                            LƯU MÃ
+                        </button>
+                    </div>
+                </div>
+                <i class="fas fa-ticket-alt position-absolute" style="right: -10px; bottom: -10px; font-size: 4rem; opacity: 0.05; color: #d3232a;"></i>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+            <p class="text-muted">Hiện chưa có chương trình khuyến mãi nào.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Tận dụng lại logic kiểm tra mã đã lưu
+    document.addEventListener("DOMContentLoaded", function() {
+        let saved = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
+        document.querySelectorAll('.btn-save-voucher').forEach(btn => {
+            let code = btn.getAttribute('data-code');
+            if (saved.includes(code)) {
+                let area = document.getElementById('action-' + code);
+                area.innerHTML = '<span class="badge bg-success py-2 px-3">ĐÃ LƯU</span>';
+            }
+        });
+    });
+
+    function saveVoucher(btn, code) {
+        let saved = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
+        if (!saved.includes(code)) {
+            saved.push(code);
+            localStorage.setItem('gym_vouchers', JSON.stringify(saved));
+            let area = document.getElementById('action-' + code);
+            area.innerHTML = '<span class="badge bg-success py-2 px-3">ĐÃ LƯU</span>';
+            alert("Đã lưu mã thành công!");
+        }
+    }
+</script>
+{% endblock %}

@@ -43,6 +43,20 @@
                 <h2 class="text-danger fw-bold m-0 display-5">{{ product.price|intcomma }} đ</h2>
             </div>
 
+            <div class="voucher-wrapper mb-4">
+                <div class="voucher-card">
+                    <div class="voucher-left">
+                        <span style="font-size: 1.1rem; text-align: center;">GIẢM 50K</span>
+                    </div>
+                    <div class="voucher-right">
+                        <h4 class="text-danger">NEWBIE50</h4>
+                        <p>Đơn tối thiểu 200k</p>
+                        <button class="btn-save-voucher" onclick="alert('Đã lưu mã NEWBIE50! Hãy nhập mã này ở bước thanh toán nhé.')">Lưu</button>
+                    </div>
+                    <div class="circle top"></div>
+                    <div class="circle bottom"></div>
+                </div>
+            </div>
             <div class="d-grid gap-3 mb-4">
                 <a href="{% url 'store:add_to_cart' product.pk %}?buy_now=true" class="btn btn-danger btn-lg fw-bold shadow-sm py-3 text-uppercase scale-hover" style="letter-spacing: 1px; border-radius: 12px;">
                     <i class="fas fa-bolt me-2"></i> MUA NGAY (Giao nhanh 2h)

@@ -1,19 +1,23 @@
-   # Bỏ qua thư mục môi trường ảo (Nặng và không cần thiết)
+# Bỏ qua thư mục môi trường ảo (Nặng và không cần thiết)
 .venv/
 venv/
 env/
 
 # Bỏ qua file database (Nếu dùng SQLite)
 db.sqlite3
+*.sqlite3
 
 # Bỏ qua các file rác của Python
 __pycache__/
 *.py[cod]
 
-# Bỏ qua file cấu hình riêng tư (nếu có)
+# Bỏ qua file cấu hình riêng tư (BẢO MẬT TUYỆT ĐỐI KHÔNG ĐƯỢC LÊN GITHUB)
 .env
 
+# Bỏ qua thư mục chứa file tĩnh do server tự build (Render sẽ tự tạo)
+staticfiles/
+
 # --- LỰA CHỌN VỀ ẢNH (MEDIA) ---
-# Nếu bạn muốn lưu ảnh lên GitHub để bạn bè tải về thấy luôn thì ĐỪNG dán dòng dưới.
-# Nếu làm dự án thật (production), người ta thường bỏ qua media để nhẹ repo.
-# /media/
+# Triển khai dự án thật (production) thì NÊN bỏ qua media để nhẹ repo.
+media/
+/media/

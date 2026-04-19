@@ -93,6 +93,13 @@
                         <div class="voucher-section py-3 mb-3 border-bottom border-top">
                             <h6 class="fw-bold mb-3"><i class="fas fa-ticket-alt text-danger me-2"></i> Áp dụng ưu đãi</h6>
 
+                            <div class="d-flex gap-2 mb-2">
+                                <input type="text" id="voucher-input" class="form-control" placeholder="Nhập mã ưu đãi (nếu có)..." style="text-transform: uppercase;">
+                                <button type="button" onclick="applyManualVoucher()" class="btn btn-dark fw-bold px-3">Áp dụng</button>
+                            </div>
+                            <p id="voucher-message" style="margin: 0 0 15px 0; font-size: 13px; font-weight: bold;"></p>
+
+                            <div class="small text-muted mb-2 fw-bold"><i class="fas fa-wallet me-1"></i> Mã đã lưu trong ví:</div>
                             <div id="available-vouchers" class="d-flex flex-column gap-2">
                                 </div>
 
@@ -127,95 +134,163 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Kho dữ liệu Mã Giảm Giá (Giống y chang với trang chủ)
-    const VOUCHER_DB = {
-        'NEWBIE50': { type: 'fixed', value: 50000, label: 'Giảm 50.000đ cho đơn hàng' },
-        'FLASH30': { type: 'fixed', value: 30000, label: 'Giảm thẳng 30.000đ siêu tốc' }
-    };
-
-    // 2. Lấy danh sách mã khách ĐÃ LƯU từ localStorage
     let savedVouchers = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
     let voucherContainer = document.getElementById('available-vouchers');
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    // 3. Lấy TỔNG TIỀN GỐC từ Django render ra
-    let rawBaseText = document.getElementById('subtotal-display').getAttribute('data-value');
-    // Làm sạch chuỗi (xóa dấu phẩy, dấu chấm) để lấy số tính toán
-    let baseTotal = parseFloat(rawBaseText.replace(/,/g, '').replace(/\./g, '').replace(/[^0-9.-]+/g,"")) || 0;
-    let currentDiscount = 0;
-
-    // Hàm format tiền tệ (Ví dụ: 1000000 -> 1.000.000 đ)
-    const formatMoney = (num) => num.toLocaleString('vi-VN') + " đ";
-
-    // 4. VẼ VOUCHER RA MÀN HÌNH
     if (savedVouchers.length === 0) {
         voucherContainer.innerHTML = `
             <div class="text-center p-3 bg-light rounded border border-dashed">
                 <i class="fas fa-box-open text-muted mb-2 fs-3"></i>
                 <p class="text-muted small mb-0">Bạn chưa lưu mã ưu đãi nào.</p>
             </div>`;
-    } else {
-        savedVouchers.forEach(code => {
-            if (VOUCHER_DB[code]) {
-                let v = VOUCHER_DB[code];
+        return;
+    }
+
+    // Hiển thị trạng thái đang tải
+    voucherContainer.innerHTML = `
+        <div class="text-center p-3">
+            <span class="spinner-border spinner-border-sm text-danger" role="status"></span>
+            <small class="text-muted ms-2">Đang tải ví ưu đãi...</small>
+        </div>`;
+
+    // Gọi API để lấy thông tin mã và dọn rác
+    fetch("{% url 'store:wallet_info' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({'codes': savedVouchers})
+    })
+    .then(res => res.json())
+    .then(data => {
+        // ĐÃ SỬA LỖI Ở ĐÂY: Thêm trường hợp else nếu Backend lỗi
+        if (data.success) {
+            // Ghi đè lại ví bằng danh sách mã xịn từ Server
+            localStorage.setItem('gym_vouchers', JSON.stringify(data.valid_codes));
+
+            voucherContainer.innerHTML = '';
+
+            if(data.vouchers.length === 0) {
+                voucherContainer.innerHTML = `
+                    <div class="text-center p-3 bg-light rounded border border-dashed">
+                        <p class="text-muted small mb-0">Các mã bạn lưu đã hết hạn hoặc không tồn tại.</p>
+                    </div>`;
+                return;
+            }
+
+            // In ra từng thẻ
+            data.vouchers.forEach(item => {
                 let html = `
-                <div class="border rounded p-2 d-flex justify-content-between align-items-center bg-light voucher-item" style="cursor:pointer; transition: 0.2s;" onclick="applyDiscount('${code}', ${v.value})">
+                <div class="border rounded p-2 d-flex justify-content-between align-items-center bg-light voucher-item" id="v-card-${item.code}" style="cursor:pointer; transition: 0.2s;" onclick="triggerVoucherAPI('${item.code}')">
                     <div>
-                        <strong class="text-danger d-block">${code}</strong>
-                        <small class="text-muted">${v.label}</small>
+                        <strong class="text-danger d-block"><i class="fas fa-tag me-1"></i> ${item.code}</strong>
+                        <small class="text-muted fw-bold">${item.desc}</small>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input voucher-radio" type="radio" name="voucher_selection" id="radio-${code}" style="pointer-events: none;">
+                        <input class="form-check-input voucher-radio" type="radio" name="v_radio" id="radio-${item.code}" style="pointer-events: none;">
                     </div>
                 </div>`;
                 voucherContainer.insertAdjacentHTML('beforeend', html);
-            }
-        });
-    }
+            });
+        } else {
+            // NẾU BACKEND CÓ LỖI (Ví dụ quên import json) THÌ IN RA ĐÂY CHỨ KO XOAY NỮA
+            console.error("Lỗi từ Server:", data.message);
+            voucherContainer.innerHTML = `<div class="text-center p-3 bg-light rounded border"><p class="text-danger small fw-bold mb-0">Lỗi Server: ${data.message}</p></div>`;
+        }
+    })
+    .catch(err => {
+        console.error("Lỗi Fetch API:", err);
+        voucherContainer.innerHTML = '<div class="text-center p-2"><small class="text-danger fw-bold">Không thể tải thông tin ví lúc này (Lỗi mạng/API).</small></div>';
+    });
 
-    // 5. HÀM ÁP DỤNG MÃ KHI KHÁCH CLICK
-    window.applyDiscount = function(code, discountValue) {
-        // Reset giao diện các mã khác
-        document.querySelectorAll('.voucher-radio').forEach(radio => radio.checked = false);
-        document.querySelectorAll('.voucher-item').forEach(item => {
-            item.classList.remove('border-danger', 'bg-white');
-            item.classList.add('bg-light');
-        });
-
-        // Highlight mã đang chọn
-        let selectedItem = document.getElementById(`radio-${code}`).closest('.voucher-item');
-        document.getElementById(`radio-${code}`).checked = true;
-        selectedItem.classList.replace('bg-light', 'bg-white');
-        selectedItem.classList.add('border-danger', 'shadow-sm');
-
-        // Tính toán lại tiền
-        currentDiscount = discountValue;
-        let finalTotal = baseTotal - currentDiscount;
-        if (finalTotal < 0) finalTotal = 0;
-
-        // Cập nhật lên màn hình
-        document.getElementById('discount-row').classList.remove('d-none');
-        document.getElementById('discount-display').innerText = "- " + formatMoney(currentDiscount);
-        document.getElementById('final-total-display').innerText = formatMoney(finalTotal);
-
-        // Gắn mã vào form ẩn để gửi về Backend xử lý đơn
-        document.getElementById('applied-voucher-code').value = code;
-    };
-
-    // 6. THU HỒI MÃ SAU KHI ĐẶT HÀNG THÀNH CÔNG
+    // Thu hồi mã
     document.getElementById('checkout-form').addEventListener('submit', function(e) {
         let usedCode = document.getElementById('applied-voucher-code').value;
         if (usedCode) {
-            // Xóa mã vừa xài ra khỏi kho lưu trữ localStorage
-            let newSaved = savedVouchers.filter(v => v !== usedCode);
+            let currentVouchers = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
+            let newSaved = currentVouchers.filter(v => v !== usedCode);
             localStorage.setItem('gym_vouchers', JSON.stringify(newSaved));
         }
     });
 });
+
+window.applyManualVoucher = function() {
+    const code = document.getElementById('voucher-input').value.trim().toUpperCase();
+    if(!code) return;
+    triggerVoucherAPI(code);
+}
+
+window.triggerVoucherAPI = function(code) {
+    document.querySelectorAll('.voucher-radio').forEach(r => r.checked = false);
+    document.querySelectorAll('.voucher-item').forEach(i => i.classList.replace('bg-white', 'bg-light'));
+    document.querySelectorAll('.voucher-item').forEach(i => i.classList.remove('border-danger', 'shadow-sm'));
+
+    const msgBox = document.getElementById('voucher-message');
+    msgBox.innerText = "Đang kiểm tra...";
+    msgBox.style.color = "#888";
+
+    let rawBaseText = document.getElementById('subtotal-display').getAttribute('data-value');
+    let cartTotal = parseFloat(rawBaseText.replace(/,/g, '').replace(/\./g, '').replace(/[^0-9.-]+/g,"")) || 0;
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch("{% url 'store:apply_coupon' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrftoken
+        },
+        body: new URLSearchParams({
+            'code': code,
+            'cart_total': cartTotal
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Mã lỗi HTTP: " + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if(data.success) {
+            msgBox.style.color = "green";
+            msgBox.innerText = "✅ " + data.message;
+
+            let cardId = `v-card-${code}`;
+            let radioId = `radio-${code}`;
+            if(document.getElementById(cardId)) {
+                document.getElementById(cardId).classList.replace('bg-light', 'bg-white');
+                document.getElementById(cardId).classList.add('border-danger', 'shadow-sm');
+                document.getElementById(radioId).checked = true;
+            }
+
+            document.getElementById('applied-voucher-code').value = code;
+            document.getElementById('voucher-input').value = code;
+
+            const formatVN = (num) => new Intl.NumberFormat('vi-VN').format(num) + ' đ';
+            document.getElementById('discount-row').classList.remove('d-none');
+
+            if(data.discount_amount !== undefined) {
+                document.getElementById('discount-display').innerText = "- " + formatVN(data.discount_amount);
+                document.getElementById('final-total-display').innerText = formatVN(data.new_total);
+            }
+        } else {
+            msgBox.style.color = "red";
+            msgBox.innerText = "❌ " + data.message;
+            document.getElementById('applied-voucher-code').value = "";
+            document.getElementById('discount-row').classList.add('d-none');
+            document.getElementById('final-total-display').innerText = new Intl.NumberFormat('vi-VN').format(cartTotal) + ' đ';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        msgBox.style.color = "red";
+        msgBox.innerText = "❌ Lỗi kết nối máy chủ!";
+    });
+}
 </script>
 
 <style>
-    /* CSS trang trí nhẹ cho form focus và nút */
-    .form-control:focus, .form-check-input:focus {
+    .form-control:focus, .form-check-input:focus, #voucher-input:focus {
         box-shadow: none;
         border: 1px solid #d3232a !important;
     }
@@ -227,7 +302,6 @@ document.addEventListener("DOMContentLoaded", function() {
         background-color: #b01a20;
         transform: translateY(-2px);
     }
-    /* Thanh cuộn nhỏ gọn cho giỏ hàng */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }

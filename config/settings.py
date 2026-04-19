@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize', # Bắt buộc để dùng |intcomma
+    'django.contrib.humanize',# Bắt buộc để dùng |intcomma
 
     # --- CÁC APP CỦA DỰ ÁN ---
     'core',
@@ -36,6 +36,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # <-- THÊM DÒNG NÀY ĐỂ QUẢN LÝ FILE TĨNH (CSS, JS) TRÊN SERVER
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -49,7 +50,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'], # <-- ĐÃ SỬA: CHỈ ĐƯỜNG CHO DJANGO TÌM FILE GIAO DIỆN
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -112,3 +113,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev']
+
+# settings.py
+DIFY_API_KEY = os.getenv("DIFY_API_KEY")
+DIFY_API_URL = os.getenv("DIFY_API_URL")

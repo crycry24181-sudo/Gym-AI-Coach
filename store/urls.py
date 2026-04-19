@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import api_views
 
 # DÒNG QUAN TRỌNG NHẤT: Khai báo namespace để fix lỗi 'store' is not a registered namespace
 app_name = 'store'
@@ -38,4 +39,15 @@ urlpatterns = [
     path('manage-exercises/edit/<int:pk>/', views.edit_exercise, name='edit_exercise'),
     path('exercise-autocomplete/', views.exercise_autocomplete, name='exercise_autocomplete'),
     path('api/v1/products/', views.api_get_all_products, name='api_get_all_products'),
+
+    path('erp/vouchers/', views.manage_vouchers, name='manage_vouchers'),
+    path('erp/vouchers/delete/<int:pk>/', views.delete_voucher, name='delete_voucher'),
+    path('erp/vouchers/', views.manage_vouchers, name='manage_vouchers'),
+    path('erp/vouchers/add/', views.edit_voucher, name='add_voucher'), # Trang thêm
+    path('erp/vouchers/edit/<int:pk>/', views.edit_voucher, name='edit_voucher'), # Trang sửa
+    path('erp/vouchers/delete/<int:pk>/', views.delete_voucher, name='delete_voucher'),
+    path('khuyen-mai/', views.promotions_list, name='promotions_list'),
+    path('apply-coupon/', views.apply_coupon, name='apply_coupon'),
+    path('wallet-info/', views.get_wallet_info, name='wallet_info'),
+    path('chat/', views.gym_ai_chat, name='ai_chat'),
 ]

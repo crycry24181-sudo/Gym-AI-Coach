@@ -39,27 +39,21 @@
                                         </div>
                                     </div>
                                 </td>
-
                                 <td class="fw-semibold">{{ item.product.price }} đ</td>
-
                                 <td>
                                     <div class="btn-group shadow-sm" role="group">
                                         <a href="{% url 'store:update_cart_item' item.id 'decrease' %}" class="btn btn-outline-secondary btn-sm px-3">
                                             <i class="fas fa-minus"></i>
                                         </a>
-
                                         <span class="btn btn-light btn-sm disabled text-dark fw-bold px-3" style="border-top: 1px solid #6c757d; border-bottom: 1px solid #6c757d;">
                                             {{ item.quantity }}
                                         </span>
-
                                         <a href="{% url 'store:update_cart_item' item.id 'increase' %}" class="btn btn-outline-secondary btn-sm px-3">
                                             <i class="fas fa-plus"></i>
                                         </a>
                                     </div>
                                 </td>
-
                                 <td class="fw-bold text-danger fs-5">{{ item.total_price }} đ</td>
-
                                 <td>
                                     <a href="{% url 'store:update_cart_item' item.id 'delete' %}" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Bạn chắc chắn muốn xóa món này khỏi giỏ?');">
                                         <i class="fas fa-trash-alt"></i>
@@ -73,17 +67,46 @@
             </div>
 
             <div class="card-footer bg-light py-4 px-4 border-top">
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-3 mb-md-0 text-center text-md-start">
-                        <a href="{% url 'store:store' %}" class="btn btn-outline-secondary fw-bold rounded-pill px-4 shadow-sm">
-                            <i class="fas fa-arrow-left me-2"></i> Tiếp tục mua sắm
-                        </a>
+                <div class="row">
+                    <div class="col-lg-6 mb-4 mb-lg-0">
+                        <div class="p-3 bg-white rounded-3 shadow-sm border">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-tags text-danger me-2"></i>Áp dụng ưu đãi</h6>
+
+                            <form id="coupon-form" class="d-flex gap-2 mb-3">
+                                {% csrf_token %}
+                                <input type="text" id="coupon-code" class="form-control" placeholder="NHẬP MÃ ƯU ĐÃI (NẾU CÓ)...">
+                                <button type="button" onclick="applyVoucherManual()" class="btn btn-dark fw-bold" style="min-width: 100px;">Áp dụng</button>
+                            </form>
+
+                            <div id="coupon-message" class="small fw-bold mb-3" style="display: none;"></div>
+
+                            <h6 class="small fw-bold text-muted mb-2"><i class="fas fa-wallet me-2"></i>Mã đã lưu trong ví:</h6>
+                            <div id="cart-voucher-wallet" class="d-flex flex-column gap-2">
+                                </div>
+                        </div>
                     </div>
-                    <div class="col-md-6 text-center text-md-end">
-                        <h4 class="fw-bold mb-3 text-dark">Tổng cộng: <span class="text-danger ms-2">{{ cart.total_price }} đ</span></h4>
-                        <a href="{% url 'store:checkout' %}" class="btn btn-success btn-lg px-5 shadow rounded-pill text-uppercase fw-bold">
-                            Thanh toán ngay <i class="fas fa-check-circle ms-2"></i>
-                        </a>
+
+                    <div class="col-lg-6 text-center text-lg-end">
+                        <div class="mb-3">
+                            <span class="text-muted fs-5">Tạm tính:</span>
+                            <span id="subtotal-display" data-value="{{ cart.total_price }}" class="fw-bold fs-5 ms-2">{{ cart.total_price }} đ</span>
+                        </div>
+
+                        <div id="discount-row" class="mb-3 justify-content-center justify-content-lg-end" style="display: none !important;">
+                            <span class="text-muted fs-5">Giảm giá:</span>
+                            <span id="discount-amount" class="fw-bold fs-5 text-success ms-2">- 0 đ</span>
+                        </div>
+
+                        <h4 class="fw-bold mb-4 text-dark">Tổng cộng: <span id="final-total" class="text-danger ms-2">{{ cart.total_price }} đ</span></h4>
+
+                        <div class="d-flex flex-column flex-md-row justify-content-lg-end gap-3">
+                            <a href="{% url 'store:store' %}" class="btn btn-outline-secondary fw-bold rounded-pill px-4 shadow-sm align-self-center">
+                                <i class="fas fa-arrow-left me-2"></i> Tiếp tục mua sắm
+                            </a>
+                            <a href="{% url 'store:checkout' %}" class="btn btn-success btn-lg px-5 shadow rounded-pill text-uppercase fw-bold">
+                                Thanh toán ngay <i class="fas fa-check-circle ms-2"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -99,4 +122,161 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderVoucherWallet();
+    });
+
+    // 1. LẤY MÃ TỪ VÍ VÀ GỌI API SERVER ĐỂ DỌN RÁC + LẤY MÔ TẢ
+    function renderVoucherWallet() {
+        let savedCodes = JSON.parse(localStorage.getItem('gym_vouchers')) || [];
+        let walletBox = document.getElementById('cart-voucher-wallet');
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        if (savedCodes.length === 0) {
+            walletBox.innerHTML = `
+                <div class="text-center p-3 bg-light rounded border border-dashed">
+                    <p class="text-muted small mb-0">Ví trống. Bạn chưa lưu mã nào.</p>
+                </div>`;
+            return;
+        }
+
+        walletBox.innerHTML = '<div class="text-center p-2"><span class="spinner-border spinner-border-sm text-danger"></span> <small class="text-muted ms-2">Đang tải ví...</small></div>';
+
+        fetch("{% url 'store:wallet_info' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({'codes': savedCodes})
+        })
+        .then(res => res.json())
+        .then(data => {
+            // ĐÃ SỬA LỖI Ở ĐÂY: Thêm khối else bắt lỗi Backend
+            if (data.success) {
+                // Tự động xóa mã chết khỏi máy
+                localStorage.setItem('gym_vouchers', JSON.stringify(data.valid_codes));
+                walletBox.innerHTML = '';
+
+                if(data.vouchers.length === 0) {
+                    walletBox.innerHTML = `
+                        <div class="text-center p-3 bg-light rounded border border-dashed">
+                            <p class="text-muted small mb-0">Các mã đã lưu đều đã hết hạn.</p>
+                        </div>`;
+                    return;
+                }
+
+                // Render danh sách mã
+                data.vouchers.forEach(item => {
+                    walletBox.innerHTML += `
+                        <div class="p-2 border rounded bg-light d-flex justify-content-between align-items-center mb-2 voucher-item" style="cursor: pointer; transition: 0.2s;" onclick="useVoucherFromWallet('${item.code}')" id="v-card-${item.code}">
+                            <div>
+                                <i class="fas fa-tag text-danger me-1"></i>
+                                <strong class="small">${item.code}</strong>
+                                <div class="text-muted fw-bold mt-1" style="font-size: 0.75rem;">${item.desc}</div>
+                            </div>
+                            <small class="text-primary fw-bold" style="font-size: 0.75rem;"><i class="fas fa-check-circle me-1 d-none" id="icon-${item.code}"></i>Áp dụng</small>
+                        </div>
+                    `;
+                });
+            } else {
+                // NẾU BACKEND BÁO LỖI THÌ IN RA ĐÂY
+                console.error("Lỗi từ Server:", data.message);
+                walletBox.innerHTML = `<div class="text-center p-3 bg-light rounded border"><p class="text-danger small fw-bold mb-0">Lỗi Server: ${data.message}</p></div>`;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            walletBox.innerHTML = '<div class="text-center p-2"><small class="text-danger fw-bold">Lỗi tải ví ưu đãi!</small></div>';
+        });
+    }
+
+    // 2. KHI KHÁCH BẤM VÀO MÃ TRONG VÍ
+    function useVoucherFromWallet(code) {
+        document.getElementById('coupon-code').value = code;
+        applyCouponAjax(code);
+    }
+
+    // 3. KHI KHÁCH BẤM NÚT "ÁP DỤNG"
+    function applyVoucherManual() {
+        let code = document.getElementById('coupon-code').value.trim().toUpperCase();
+        if (!code) {
+            alert("Vui lòng nhập mã ưu đãi!");
+            return;
+        }
+        applyCouponAjax(code);
+    }
+
+    // 4. HÀM GỬI AJAX ÁP DỤNG MÃ
+    function applyCouponAjax(code) {
+        const msgBox = document.getElementById('coupon-message');
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        msgBox.style.display = 'block';
+        msgBox.className = 'small fw-bold mb-3 text-primary';
+        msgBox.innerText = "Đang kiểm tra...";
+
+        // Lấy tổng tiền giỏ hàng hiện tại để tính toán
+        let rawBaseText = document.getElementById('subtotal-display').getAttribute('data-value');
+        let cartTotal = parseFloat(rawBaseText.replace(/,/g, '').replace(/\./g, '').replace(/[^0-9.-]+/g,"")) || 0;
+
+        // Reset highlight trong ví
+        document.querySelectorAll('.voucher-item').forEach(el => {
+            el.classList.replace('bg-white', 'bg-light');
+            el.classList.remove('border-danger', 'shadow-sm');
+        });
+        document.querySelectorAll('i[id^="icon-"]').forEach(icon => icon.classList.add('d-none'));
+
+        fetch("{% url 'store:apply_coupon' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": csrftoken
+            },
+            body: new URLSearchParams({ 'code': code, 'cart_total': cartTotal })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Mã lỗi HTTP: " + response.status);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Thành công
+                msgBox.className = 'small fw-bold mb-3 text-success';
+                msgBox.innerText = "✅ " + data.message;
+
+                // Highlight mã đang được chọn
+                let card = document.getElementById(`v-card-${code}`);
+                let checkIcon = document.getElementById(`icon-${code}`);
+                if (card) {
+                    card.classList.replace('bg-light', 'bg-white');
+                    card.classList.add('border-danger', 'shadow-sm');
+                    if(checkIcon) checkIcon.classList.remove('d-none');
+                }
+
+                // Cập nhật giá lên màn hình mà không cần load lại trang
+                const formatVN = (num) => new Intl.NumberFormat('vi-VN').format(num) + ' đ';
+                document.getElementById('discount-row').style.setProperty('display', 'flex', 'important');
+
+                if(data.discount_amount !== undefined) {
+                    document.getElementById('discount-amount').innerText = "- " + formatVN(data.discount_amount);
+                    document.getElementById('final-total').innerText = formatVN(data.new_total);
+                }
+            } else {
+                // Thất bại
+                msgBox.className = 'small fw-bold mb-3 text-danger';
+                msgBox.innerText = "❌ " + data.message;
+                document.getElementById('discount-row').style.setProperty('display', 'none', 'important');
+                document.getElementById('final-total').innerText = new Intl.NumberFormat('vi-VN').format(cartTotal) + ' đ';
+            }
+        })
+        .catch(error => {
+            console.error("Lỗi:", error);
+            msgBox.className = 'small fw-bold mb-3 text-danger';
+            msgBox.innerText = "❌ Lỗi kết nối máy chủ!";
+        });
+    }
+</script>
 {% endblock %}

@@ -1,5 +1,7 @@
 from django import forms
 from .models import Product, Exercise
+from .models import Coupon
+from django.core.exceptions import ValidationError
 
 
 # Widget tùy chỉnh để hỗ trợ chọn nhiều ảnh cùng lúc
@@ -68,3 +70,29 @@ class ExerciseForm(forms.ModelForm):
             'image': 'Ảnh minh họa bài tập',
             'video_url': 'Link Video (YouTube)'
         }
+
+class CouponForm(forms.ModelForm):
+    class Meta:
+        model = Coupon
+        fields = ['code', 'discount_type', 'value', 'min_purchase', 'valid_from', 'valid_to', 'active']
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'VD: NEWBIE50'}),
+            'discount_type': forms.Select(attrs={'class': 'form-select', 'id': 'id_discount_type'}),
+            'value': forms.NumberInput(attrs={'class': 'form-control', 'id': 'id_value', 'min': '0'}),
+            'min_purchase': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'valid_from': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'valid_to': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    # HÀM BẢO MẬT BACKEND: Kiểm tra dữ liệu trước khi lưu vào Database
+    def clean(self):
+        cleaned_data = super().clean()
+        discount_type = cleaned_data.get('discount_type')
+        value = cleaned_data.get('value')
+
+        # Nếu là phần trăm mà giá trị > 100 thì báo lỗi ngay
+        if discount_type == 'PERCENTAGE' and value is not None and value > 100:
+            self.add_error('value', 'Giá trị giảm theo phần trăm không được vượt quá 100%.')
+
+        return cleaned_data

@@ -11,6 +11,9 @@ from datetime import datetime
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
 from django.http import JsonResponse
+from .models import Coupon
+from .forms import CouponForm
+import requests
 
 # Import Models và Forms
 from .models import Product, ProductImage, Cart, CartItem, Order, OrderItem, Exercise
@@ -688,3 +691,188 @@ def api_get_all_products(request):
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+# 1. Trang quản lý danh sách Voucher trong ERP
+def manage_vouchers(request):
+    vouchers = Coupon.objects.all().order_by('-valid_from')
+    return render(request, 'store/manage_vouchers.html', {'vouchers': vouchers})
+
+# 2. Hàm xóa Voucher nhanh trong ERP
+def delete_voucher(request, pk):
+    voucher = get_object_or_404(Coupon, pk=pk)
+    voucher.delete()
+    return redirect('store:manage_vouchers')
+
+
+def edit_voucher(request, pk=None):
+    if pk:
+        voucher = get_object_or_404(Coupon, pk=pk)
+        title = "Chỉnh sửa Voucher"
+    else:
+        voucher = None
+        title = "Tạo Voucher mới"
+
+    if request.method == 'POST':
+        form = CouponForm(request.POST, instance=voucher)
+        if form.is_valid():
+            form.save()
+            return redirect('store:manage_vouchers')
+    else:
+        form = CouponForm(instance=voucher)
+
+    return render(request, 'store/edit_voucher.html', {'form': form, 'title': title})
+
+def promotions_list(request):
+    all_vouchers = Coupon.objects.all()
+    # Lọc bằng Python để tránh lỗi Djongo
+    active_vouchers = [v for v in all_vouchers if v.active]
+    return render(request, 'store/promotions.html', {'vouchers': active_vouchers})
+
+
+def apply_coupon(request):
+    if request.method == 'POST':
+        raw_code = request.POST.get('code', '')
+        code = raw_code.strip().upper()
+
+        # Bắt lấy tổng tiền giỏ hàng từ Frontend gửi lên
+        try:
+            cart_total = float(request.POST.get('cart_total', 0))
+        except ValueError:
+            cart_total = 0
+
+        try:
+            coupon = Coupon.objects.get(code=code)
+
+            if not coupon.active:
+                return JsonResponse({'success': False, 'message': 'Mã này đã bị vô hiệu hóa!'})
+
+            now = timezone.now()
+            if coupon.valid_from and coupon.valid_from > now:
+                return JsonResponse({'success': False, 'message': 'Mã này chưa đến thời gian áp dụng!'})
+            if coupon.valid_to and coupon.valid_to < now:
+                return JsonResponse({'success': False, 'message': 'Mã này đã hết hạn sử dụng!'})
+
+            # Chuyển đổi dữ liệu Decimal128 của MongoDB sang số thực (Float)
+            val = float(str(coupon.value))
+            min_purchase = float(str(coupon.min_purchase))
+
+            # KIỂM TRA ĐIỀU KIỆN ĐƠN TỐI THIỂU
+            if cart_total < min_purchase:
+                # Format số tiền cho đẹp (VD: 500,000)
+                formatted_min = "{:,.0f}".format(min_purchase)
+                return JsonResponse({'success': False, 'message': f'Đơn hàng tối thiểu phải từ {formatted_min}đ!'})
+
+            # TÍNH TOÁN SỐ TIỀN GIẢM GIÁ
+            if coupon.discount_type == 'PERCENT':
+                discount_amount = cart_total * (val / 100)
+            else:  # FIXED (Trừ thẳng tiền)
+                discount_amount = val
+
+            # Đảm bảo tiền giảm không vượt quá tổng tiền đơn hàng
+            if discount_amount > cart_total:
+                discount_amount = cart_total
+
+            new_total = cart_total - discount_amount
+
+            return JsonResponse({
+                'success': True,
+                'discount_amount': discount_amount,  # Trả về số tiền được giảm
+                'new_total': new_total,  # Trả về tổng tiền mới
+                'message': f'Đã áp dụng mã {code} thành công!'
+            })
+
+        except Coupon.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Mã không tồn tại!'})
+
+    return JsonResponse({'success': False, 'message': 'Yêu cầu không hợp lệ.'})
+
+
+def get_wallet_info(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            codes = data.get('codes', [])
+
+            if not codes:
+                return JsonResponse({'success': True, 'vouchers': [], 'valid_codes': []})
+
+            # TUYỆT ĐỐI KHÔNG DÙNG LỆNH FILTER NÀO Ở ĐÂY NỮA
+            # Rút thẳng toàn bộ bảng Coupon lên, không có WHERE clause thì Djongo không thể sập được
+            all_coupons = Coupon.objects.all()
+
+            now = timezone.now()
+            result = []
+            valid_codes = []
+
+            for c in all_coupons:
+                # 100% LỌC BẰNG PYTHON Ở ĐÂY
+                if not getattr(c, 'active', False):  # Kiểm tra active
+                    continue
+                if c.code not in codes:  # Kiểm tra có trong ví không
+                    continue
+                if c.valid_from and c.valid_from > now:  # Kiểm tra ngày bắt đầu
+                    continue
+                if c.valid_to and c.valid_to < now:  # Kiểm tra ngày kết thúc
+                    continue
+
+                valid_codes.append(c.code)
+
+                # Ép kiểu an toàn từ Decimal128 sang Float
+                val = float(str(c.value)) if getattr(c, 'value', None) else 0
+                min_p = float(str(c.min_purchase)) if getattr(c, 'min_purchase', None) else 0
+
+                # Format hiển thị
+                if c.discount_type == 'FIXED':
+                    val_str = f"{val:,.0f}".replace(',', '.')
+                    min_str = f"{min_p:,.0f}".replace(',', '.')
+                    desc = f"Giảm {val_str}đ đơn từ {min_str}đ"
+                else:
+                    min_str = f"{min_p:,.0f}".replace(',', '.')
+                    desc = f"Giảm {val:g}% đơn từ {min_str}đ"
+
+                result.append({'code': c.code, 'desc': desc})
+
+            return JsonResponse({'success': True, 'vouchers': result, 'valid_codes': valid_codes})
+
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())  # Bắn lỗi ra terminal để nhìn
+            return JsonResponse({'success': False, 'message': str(e)})
+
+    return JsonResponse({'success': False, 'message': 'Yêu cầu không hợp lệ.'})
+
+
+def gym_ai_chat(request):
+    if request.method == "POST":
+        user_message = request.POST.get('message')
+        conversation_id = request.session.get('dify_conversation_id', "")
+
+        # TỰ ĐỘNG LẤY API KEY VÀ URL TỪ FILE .ENV THÔNG QUA SETTINGS
+        api_key = settings.DIFY_API_KEY
+        api_url = settings.DIFY_API_URL
+
+        payload = {
+            "inputs": {},
+            "query": user_message,
+            "response_mode": "blocking",
+            "conversation_id": conversation_id,
+            "user": str(request.user.id) if request.user.is_authenticated else "guest_user"
+        }
+
+        headers = {
+            "Authorization": api_key,  # Truyền Key bảo mật vào đây
+            "Content-Type": "application/json"
+        }
+
+        try:
+            response = requests.post(api_url, headers=headers, json=payload)
+            data = response.json()
+
+            if 'conversation_id' in data:
+                request.session['dify_conversation_id'] = data['conversation_id']
+
+            return JsonResponse({"answer": data.get('answer', 'Không có phản hồi từ AI')})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return render(request, 'core/chat.html')

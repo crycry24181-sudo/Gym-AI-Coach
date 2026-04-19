@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Product, ProductImage, Order, OrderItem, Exercise
+from .models import Coupon
 
 
 # ================= QUẢN LÝ SẢN PHẨM =================
@@ -52,3 +53,9 @@ class OrderAdmin(admin.ModelAdmin):
     # 4. Các trường cho phép sửa bên trong trang chi tiết
     fields = ('user', 'full_name', 'email', 'phone', 'address', 'total_amount', 'payment_method', 'status',
               'cancel_reason')
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ['code', 'discount_type', 'value', 'min_purchase', 'valid_to', 'active']
+    list_filter = ['active', 'discount_type', 'valid_from', 'valid_to']
+    search_fields = ['code']
