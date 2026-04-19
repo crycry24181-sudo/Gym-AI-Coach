@@ -390,6 +390,7 @@ def delete_exercise(request, pk):
 
 
 @staff_member_required(login_url='login')
+@staff_member_required(login_url='login')
 def manage_orders(request):
     # --- FIX LỖI DJONGO M2M: Dùng Python để kiểm tra quyền thay vì .exists() ---
     is_kho = False
@@ -420,8 +421,33 @@ def manage_orders(request):
             if new_status == 'COMPLETED': order.is_paid = True
             order.save()
 
+            # --- KHU VỰC GỬI MAIL THÔNG BÁO TỰ ĐỘNG ---
             if old_status != new_status:
-                # Logic tự động trừ tồn kho
+                # 1. Tạo nội dung tiếng Việt cho mail
+                status_vn = {
+                    'PENDING': 'Đang chờ xử lý',
+                    'SHIPPING': 'Đang giao hàng',
+                    'COMPLETED': 'Đã hoàn thành',
+                    'CANCELLED': 'Đã hủy'
+                }
+
+                subject = f"[Gym AI Coach] Cập nhật trạng thái đơn hàng #{order.id}"
+                message = f"Chào {order.full_name},\n\n"
+                message += f"Đơn hàng #{order.id} của bạn vừa được chuyển sang trạng thái: {status_vn.get(new_status, new_status)}.\n"
+
+                if new_status == 'CANCELLED' and cancel_reason:
+                    message += f"Lý do hủy: {cancel_reason}\n"
+
+                message += "\nCảm ơn bạn đã tin dùng Gym AI Coach! Chúc bạn tập luyện hiệu quả.\n"
+
+                # 2. Gọi cái luồng gửi mail chạy ngầm (đã định nghĩa class EmailThread ở trên)
+                try:
+                    EmailThread(subject, message, [order.email]).start()
+                    print(f"DEBUG: Da kick hoat gui mail cho {order.email}")
+                except Exception as e:
+                    print(f"Lỗi khi kích hoạt luồng gửi mail: {e}")
+
+                # 3. Logic tự động trừ tồn kho (giữ nguyên của ông)
                 if new_status == 'SHIPPING' and old_status != 'SHIPPING':
                     for item in order.items.all():
                         product = item.product
@@ -430,7 +456,7 @@ def manage_orders(request):
                             product.stock = 0
                         product.save()
 
-            messages.success(request, f"Đã cập nhật đơn hàng #{order_id}!")
+            messages.success(request, f"Đã cập nhật đơn hàng #{order_id} và gửi mail thông báo!")
         except Order.DoesNotExist:
             messages.error(request, "Không tìm thấy đơn hàng!")
 
