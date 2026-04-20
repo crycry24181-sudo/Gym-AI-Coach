@@ -886,13 +886,15 @@ def gym_ai_chat(request):
         }
 
         headers = {
-            "Authorization": api_key,  # Truyền Key bảo mật vào đây
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
 
         try:
             response = requests.post(api_url, headers=headers, json=payload)
             data = response.json()
+
+            print(f"DEBUG DIFY RESPONSE: {data}")
 
             if 'conversation_id' in data:
                 request.session['dify_conversation_id'] = data['conversation_id']
