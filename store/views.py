@@ -688,15 +688,20 @@ def exercise_autocomplete(request):
     # Nhớ để safe=False vì mình đang trả về một List các Dictionary
     return JsonResponse(results, safe=False)
 
+
 def api_get_all_products(request):
     """Cổng API cung cấp dữ liệu Sản phẩm cho AI Recommendation"""
     try:
         products = Product.objects.all()
         data = []
+
+        # ĐÂY CHÍNH LÀ CHỖ ÉP CỨNG TÊN MIỀN
+        base_url = "https://gym-ai-coach-rj3n.onrender.com"
+
         for p in products:
-            # Tạo đường dẫn (link) tuyệt đối có chứa https://...
-            product_url = request.build_absolute_uri(f"/store/product/{p.id}/")
-            image_url = request.build_absolute_uri(p.image.url) if p.image else ''
+            # Tự tay nối chuỗi tên miền với đường dẫn, dẹp luôn build_absolute_uri
+            product_url = f"{base_url}/store/product/{p.id}/"
+            image_url = f"{base_url}{p.image.url}" if p.image else ''
 
             data.append({
                 'id': p.id,
@@ -717,7 +722,6 @@ def api_get_all_products(request):
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
-# 1. Trang quản lý danh sách Voucher trong ERP
 def manage_vouchers(request):
     vouchers = Coupon.objects.all().order_by('-valid_from')
     return render(request, 'store/manage_vouchers.html', {'vouchers': vouchers})
