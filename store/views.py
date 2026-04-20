@@ -694,9 +694,9 @@ def api_get_all_products(request):
         products = Product.objects.all()
         data = []
         for p in products:
-            # Tạo đường dẫn (link) tới trang chi tiết sản phẩm
-            # Chú ý: Đổi 'product_detail' thành tên name chuẩn trong urls.py của trang chi tiết
-            product_url = f"/product/{p.id}/"
+            # Tạo đường dẫn (link) tuyệt đối có chứa https://...
+            product_url = request.build_absolute_uri(f"/store/product/{p.id}/")
+            image_url = request.build_absolute_uri(p.image.url) if p.image else ''
 
             data.append({
                 'id': p.id,
@@ -705,7 +705,7 @@ def api_get_all_products(request):
                 'category': p.get_category_display() if p.category else 'Khác',
                 'stock': p.stock,
                 'link': product_url,
-                'image_url': p.image.url if p.image else ''
+                'image_url': image_url
             })
 
         # Trả về chuỗi JSON
@@ -717,7 +717,6 @@ def api_get_all_products(request):
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
-
 # 1. Trang quản lý danh sách Voucher trong ERP
 def manage_vouchers(request):
     vouchers = Coupon.objects.all().order_by('-valid_from')
